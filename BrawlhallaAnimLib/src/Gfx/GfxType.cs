@@ -1,8 +1,9 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BrawlhallaAnimLib.Gfx;
 
-public class Gfx
+public interface IGfxType
 {
     public enum AsymmetrySwapFlagEnum
     {
@@ -25,35 +26,29 @@ public class Gfx
         // 17 isn't settable through xml. it is HAIR.
     }
 
-    public string AnimFile { get; set; } = "";
-    public string AnimClass { get; set; } = "a__Animation";
-    public double AnimScale { get; set; } = 1;
-    public double MoveAnimSpeed { get; set; } = 1;
-    public string BaseAnim { get; set; } = "Ready";
-    public string RunAnim { get; set; } = "Run";
-    public bool FlipAnim { get; set; } = false;
-    public bool FireAndForget { get; set; } = false;
-    public bool RandomFrameStart { get; set; } = false;
-    public bool Desynch { get; set; } = false; //yes it's actually called Desynch
-    public bool IgnoreCachedWeapon { get; set; } = false;
-    public uint Tint { get; set; } = 0; //packed
-    public AsymmetrySwapFlagEnum[] AsymmetrySwapFlags { get; set; } = [];
-    public CustomArt[] CustomArts { get; set; } = [];
-    public ColorSwap[] ColorSwaps { get; set; } = [];
+    string AnimFile { get; set; }
+    string AnimClass { get; set; }
+    double AnimScale { get; set; }
+    uint Tint { get; set; }
+
+    bool HasAsymmetrySwapFlag(AsymmetrySwapFlagEnum flag);
+
+    IEnumerable<ICustomArt> CustomArts();
+    IEnumerable<IColorSwap> ColorSwaps();
 
     // these are set in costumeTypes.csv.
-    public bool UseRightTorso { get; set; } = false;
-    public bool UseRightJaw { get; set; } = false;
-    public bool UseRightEyes { get; set; } = false;
-    public bool UseRightMouth { get; set; } = false;
-    public bool UseRightHair { get; set; } = false;
-    public bool UseRightForearm { get; set; } = false;
-    public bool UseRightShoulder1 { get; set; } = false;
-    public bool UseRightLeg1 { get; set; } = false;
-    public bool UseRightShin { get; set; } = false;
-    public bool UseTrueLeftRightHands { get; set; } = false;
-    public Dictionary<string, string> BoneOverrides { get; set; } = [];
+    bool UseRightTorso { get; set; }
+    bool UseRightJaw { get; set; }
+    bool UseRightEyes { get; set; }
+    bool UseRightMouth { get; set; }
+    bool UseRightHair { get; set; }
+    bool UseRightForearm { get; set; }
+    bool UseRightShoulder1 { get; set; }
+    bool UseRightLeg1 { get; set; }
+    bool UseRightShin { get; set; }
+    bool UseTrueLeftRightHands { get; set; }
+    bool TryGetBoneOverride(string bone, [MaybeNullWhen(false)] out string newBone);
     // these are set in weaponSkinType.csv
-    public bool UseRightGauntlet { get; set; } = false;
-    public bool UseRightKatar { get; set; } = false;
+    bool UseRightGauntlet { get; set; }
+    bool UseRightKatar { get; set; }
 }

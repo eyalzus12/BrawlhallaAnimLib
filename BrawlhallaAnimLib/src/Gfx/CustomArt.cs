@@ -1,8 +1,9 @@
 namespace BrawlhallaAnimLib.Gfx;
 
-public class CustomArt
+public interface ICustomArt
 {
-    public bool Right { get; set; } = false;
+    bool Right { get; set; }
+
     /*
     types:
     0 - none
@@ -12,7 +13,8 @@ public class CustomArt
     4 - flag? (can't be set in xml)
     5 - bot? (can't be set in xml)
     */
-    public int Type { get; set; } = 0;
-    public required string FileName { get; set; }
-    public required string Name { get; set; }
+    int Type { get; set; }
+
+    string FileName { get; set; }
+    string Name { get; set; }
 }
