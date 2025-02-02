@@ -1,4 +1,4 @@
-namespace BrawlhallaAnimLib.Animation;
+namespace BrawlhallaAnimLib.Bones;
 
 // those with a _ prefix aren't settable in xml
 public enum BoneTypeEnum

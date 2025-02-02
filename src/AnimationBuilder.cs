@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using BrawlhallaAnimLib.Animation;
+using BrawlhallaAnimLib.Bones;
 using BrawlhallaAnimLib.Gfx;
 using BrawlhallaAnimLib.Math;
 using BrawlhallaAnimLib.Loading;

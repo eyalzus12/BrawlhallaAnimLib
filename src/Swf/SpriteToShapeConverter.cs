@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using BrawlhallaAnimLib.Animation;
+using BrawlhallaAnimLib.Bones;
 using BrawlhallaAnimLib.Loading;
 using BrawlhallaAnimLib.Math;
 using SwfLib.Tags;

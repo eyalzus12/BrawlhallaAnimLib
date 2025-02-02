@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using BrawlhallaAnimLib.Animation;
+using BrawlhallaAnimLib.Bones;
 
 namespace BrawlhallaAnimLib.Gfx;
 

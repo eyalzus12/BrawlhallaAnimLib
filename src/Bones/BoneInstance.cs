@@ -1,6 +1,6 @@
 using BrawlhallaAnimLib.Anm;
 
-namespace BrawlhallaAnimLib.Animation;
+namespace BrawlhallaAnimLib.Bones;
 
 internal sealed class BoneInstance
 {

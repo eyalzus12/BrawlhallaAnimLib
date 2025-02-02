@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BrawlhallaAnimLib.Animation;
+namespace BrawlhallaAnimLib.Bones;
 
 internal static class BoneDatabase
 {
