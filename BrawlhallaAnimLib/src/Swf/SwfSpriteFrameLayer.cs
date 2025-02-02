@@ -4,7 +4,7 @@ using SwfLib.Tags.DisplayListTags;
 
 namespace BrawlhallaAnimLib.Swf;
 
-public class SwfSpriteFrameLayer
+internal sealed class SwfSpriteFrameLayer
 {
     public int FrameOffset { get; set; }
     public SwfMatrix Matrix { get; set; }

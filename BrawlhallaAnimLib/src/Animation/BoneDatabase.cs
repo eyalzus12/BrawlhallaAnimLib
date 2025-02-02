@@ -541,12 +541,12 @@ internal static class BoneDatabase
     public static Dictionary<string, string> KatarVariantDict { get; } = [];
     public static Dictionary<string, string> AsymSwapDict { get; } = [];
 
-    public static void Register1(string name, uint artType)
+    private static void Register1(string name, uint artType)
     {
         ArtTypeDict[name] = artType;
     }
 
-    public static void Register2(string name, uint artType, int boneType, bool dir, bool hasRVar = false)
+    private static void Register2(string name, uint artType, int boneType, bool dir, bool hasRVar = false)
     {
         BoneTypeDict[name] = new((BoneTypeEnum)boneType, dir);
         if (hasRVar)

@@ -9,7 +9,7 @@ public interface IGfxType
     string AnimFile { get; set; }
     string AnimClass { get; set; }
     double AnimScale { get; set; }
-    uint Tint { get; set; }
+    uint Tint { get; set; } // u24
 
     bool HasAsymmetrySwapFlag(BoneTypeEnum flag);
 

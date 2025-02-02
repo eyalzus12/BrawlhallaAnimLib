@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace BrawlhallaAnimLib.Swf;
 
-public class SwfSpriteFrame
+internal sealed class SwfSpriteFrame
 {
     public SortedDictionary<ushort, SwfSpriteFrameLayer> Layers { get; set; } = [];
 

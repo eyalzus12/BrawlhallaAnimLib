@@ -5,7 +5,7 @@ using SwfLib.Tags.DisplayListTags;
 
 namespace BrawlhallaAnimLib.Swf;
 
-public class SwfSprite
+internal sealed class SwfSprite
 {
     public SwfSpriteFrame[] Frames { get; set; } = [];
 
