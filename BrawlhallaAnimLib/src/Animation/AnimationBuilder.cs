@@ -7,9 +7,7 @@ using WallyAnmSpinzor;
 using BrawlhallaAnimLib.Animation;
 using BrawlhallaAnimLib.Gfx;
 using BrawlhallaAnimLib.Math;
-using BrawlhallaAnimLib.Loading.Swf;
-using BrawlhallaAnimLib.Loading.Anm;
-using BrawlhallaAnimLib.Loading.BoneData;
+using BrawlhallaAnimLib.Loading;
 
 namespace BrawlhallaAnimLib;
 
@@ -27,7 +25,7 @@ public sealed class AnimationBuilder(ISwfLoader swfLoader, IAnmLoader anmLoader,
     private static readonly string[] AnimationPrefixes = ["Animation_", "a_Animation_EB_", "a__LootBox", "a__PodiumRig"];
     private static bool IsAnmAnimation(string path)
     {
-        return path == "UI_TooltipAnimations.swf" || AnimationPrefixes.Any((prefix) => path.StartsWith(prefix));
+        return path == "UI_TooltipAnimations.swf" || AnimationPrefixes.Any(path.StartsWith);
     }
 
     // null if not loaded yet

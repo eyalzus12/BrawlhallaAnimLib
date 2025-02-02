@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using SwfLib.Tags;
 
-namespace BrawlhallaAnimLib.Loading.Swf;
+namespace BrawlhallaAnimLib.Loading;
 
 public interface ISwfLoader
 {

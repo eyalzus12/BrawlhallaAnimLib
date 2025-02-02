@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace BrawlhallaAnimLib.Loading.BoneData;
+namespace BrawlhallaAnimLib.Loading;
 
 public interface IBoneDataLoader
 {

@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using WallyAnmSpinzor;
 
-namespace BrawlhallaAnimLib.Loading.Anm;
+namespace BrawlhallaAnimLib.Loading;
 
 public interface IAnmLoader
 {

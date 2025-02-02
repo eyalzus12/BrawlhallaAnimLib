@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BrawlhallaAnimLib.Animation;
-using BrawlhallaAnimLib.Loading.Swf;
+using BrawlhallaAnimLib.Loading;
 using BrawlhallaAnimLib.Math;
 using SwfLib.Tags;
 using SwfLib.Tags.ShapeTags;
