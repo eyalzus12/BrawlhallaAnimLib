@@ -2,12 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using WallyAnmSpinzor;
-
 using BrawlhallaAnimLib.Animation;
 using BrawlhallaAnimLib.Gfx;
 using BrawlhallaAnimLib.Math;
 using BrawlhallaAnimLib.Loading;
+using BrawlhallaAnimLib.Anm;
 
 namespace BrawlhallaAnimLib;
 
@@ -39,14 +38,14 @@ public sealed class AnimationBuilder(ISwfLoader swfLoader, IAnmLoader anmLoader,
             anmLoader.LoadAnm(animFile);
             if (!anmLoader.IsAnmLoaded(animFile))
                 return null;
-            if (!anmLoader.TryGetAnmClass($"{gfx.AnimFile}/{gfx.AnimClass}", out AnmClass? anmClass))
+            if (!anmLoader.TryGetAnmClass($"{gfx.AnimFile}/{gfx.AnimClass}", out IAnmClass? anmClass))
                 throw new ArgumentException($"Could not find anim class {gfx.AnimClass} in {animFile}");
-            if (!anmClass.Animations.TryGetValue(animName, out AnmAnimation? animation))
+            if (!anmClass.TryGetAnimation(animName, out IAnmAnimation? animation))
                 throw new ArgumentException($"No animation {animName} in anim class {gfx.AnimClass}");
             if (animation.Frames.Length == 0)
                 throw new ArgumentException($"Animation {animName} has no frames");
             long frameIndex = MathUtils.SafeMod(frame + animation.BaseStart, animation.Frames.Length);
-            AnmFrame anmFrame = animation.Frames[frameIndex];
+            IAnmFrame anmFrame = animation.Frames[frameIndex];
 
             List<BoneInstance>? bones = GetBoneInstances(anmFrame.Bones, gfx);
             if (bones is null) return null;
@@ -60,7 +59,7 @@ public sealed class AnimationBuilder(ISwfLoader swfLoader, IAnmLoader anmLoader,
                     continue;
                 string boneSwfPath = GetRealSwfPath(instance.FilePath);
 
-                AnmBone bone = instance.Bone;
+                IAnmBone bone = instance.Bone;
                 Transform2D boneTransform = new(bone.ScaleX, bone.RotateSkew1, bone.RotateSkew0, bone.ScaleY, bone.X, bone.Y);
                 result.Add(new BoneSpriteWithName()
                 {
@@ -71,7 +70,7 @@ public sealed class AnimationBuilder(ISwfLoader swfLoader, IAnmLoader anmLoader,
                     Transform = transform * boneTransform,
                     Tint = gfx.Tint,
                     // TODO: implement correctly
-                    ColorSwaps = [.. gfx.ColorSwaps()],
+                    ColorSwaps = [.. gfx.ColorSwaps],
                     Opacity = bone.Opacity,
                 });
             }
@@ -89,7 +88,7 @@ public sealed class AnimationBuilder(ISwfLoader swfLoader, IAnmLoader anmLoader,
                 Transform = transform,
                 Tint = gfx.Tint,
                 // TODO: implement correctly
-                ColorSwaps = [.. gfx.ColorSwaps()],
+                ColorSwaps = [.. gfx.ColorSwaps],
                 Opacity = 1,
             };
             return [sprite];
@@ -107,7 +106,7 @@ public sealed class AnimationBuilder(ISwfLoader swfLoader, IAnmLoader anmLoader,
         BoneTypeEnum._HAIR,
     ];
 
-    private List<BoneInstance>? GetBoneInstances(AnmBone[] bones, IGfxType gfx)
+    private List<BoneInstance>? GetBoneInstances(IAnmBone[] bones, IGfxType gfx)
     {
         boneDataLoader.LoadBoneTypes();
         if (!boneDataLoader.IsBoneTypesLoaded())
@@ -116,7 +115,7 @@ public sealed class AnimationBuilder(ISwfLoader swfLoader, IAnmLoader anmLoader,
         List<BoneInstance> instances = [];
         bool otherHand = false;
         string handBoneName = "";
-        foreach (AnmBone bone in bones)
+        foreach (IAnmBone bone in bones)
         {
             if (!boneDataLoader.TryGetBoneName(bone.Id, out string? boneName))
                 throw new ArgumentException($"Could not find bone name for id {bone.Id}");
@@ -171,7 +170,7 @@ public sealed class AnimationBuilder(ISwfLoader swfLoader, IAnmLoader anmLoader,
                 handBoneName = "";
             }
 
-            if (!FindCustomArt(boneName, finalBoneName, gfx.CustomArts(), right, out ICustomArt? customArt))
+            if (!FindCustomArt(boneName, finalBoneName, gfx.CustomArts, right, out ICustomArt? customArt))
                 return null;
 
             string customArtSuffix = customArt is not null ? $"_{customArt.Name}" : "";

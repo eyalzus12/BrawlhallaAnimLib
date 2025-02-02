@@ -2,7 +2,7 @@ namespace BrawlhallaAnimLib.Gfx;
 
 public interface ICustomArt
 {
-    bool Right { get; set; }
+    bool Right { get; }
 
     /*
     types:
@@ -13,8 +13,8 @@ public interface ICustomArt
     4 - flag? (can't be set in xml)
     5 - bot? (can't be set in xml)
     */
-    int Type { get; set; }
+    int Type { get; }
 
-    string FileName { get; set; }
-    string Name { get; set; }
+    string FileName { get; }
+    string Name { get; }
 }

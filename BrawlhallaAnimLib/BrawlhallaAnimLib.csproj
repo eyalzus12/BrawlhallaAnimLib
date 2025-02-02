@@ -8,10 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WallyAnmSpinzor\WallyAnmSpinzor.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="SwfLib" Version="1.0.5" />
   </ItemGroup>
 
