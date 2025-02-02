@@ -1,3 +1,5 @@
+using SwfLib.Data;
+
 namespace BrawlhallaAnimLib.Math;
 
 internal static class MathUtils
@@ -8,4 +10,6 @@ internal static class MathUtils
         if (x < 0) x += m;
         return x;
     }
+
+    public static Transform2D SwfMatrixToTransform(SwfMatrix m) => new(m.ScaleX, m.RotateSkew1, m.RotateSkew0, m.ScaleY, m.TranslateX / 20.0, m.TranslateY / 20.0);
 }

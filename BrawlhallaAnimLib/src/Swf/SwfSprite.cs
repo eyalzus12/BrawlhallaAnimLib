@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using SwfLib.Tags;
 using SwfLib.Tags.DisplayListTags;
 
-namespace BrawlhallaAnimLib.Loading.Swf;
+namespace BrawlhallaAnimLib.Swf;
 
 public class SwfSprite
 {
@@ -16,6 +16,11 @@ public class SwfSprite
         {
             if (tag is PlaceObjectBaseTag placeObject)
             {
+                if (tag is PlaceObjectTag)
+                {
+                    throw new ArgumentException("Place object tag 1 is not supported. Only 2 and 3.");
+                }
+
                 if (frames[^1].Layers.TryGetValue(placeObject.Depth, out SwfSpriteFrameLayer? layer))
                 {
                     layer.ModifyBy(placeObject);

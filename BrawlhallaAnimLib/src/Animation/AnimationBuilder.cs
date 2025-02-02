@@ -64,7 +64,7 @@ public sealed class AnimationBuilder(ISwfLoader swfLoader, IAnmLoader anmLoader,
 
                 AnmBone bone = instance.Bone;
                 Transform2D boneTransform = new(bone.ScaleX, bone.RotateSkew1, bone.RotateSkew0, bone.ScaleY, bone.X, bone.Y);
-                result.Add(new()
+                result.Add(new BoneSpriteWithName()
                 {
                     SwfFilePath = boneSwfPath,
                     SpriteName = instance.SpriteName,
@@ -82,7 +82,7 @@ public sealed class AnimationBuilder(ISwfLoader swfLoader, IAnmLoader anmLoader,
         // swf animation
         else
         {
-            BoneSprite sprite = new()
+            BoneSprite sprite = new BoneSpriteWithName()
             {
                 SwfFilePath = animFile,
                 SpriteName = gfx.AnimClass,

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BrawlhallaAnimLib.Loading.Swf;
+namespace BrawlhallaAnimLib.Swf;
 
 public class SwfSpriteFrame
 {
