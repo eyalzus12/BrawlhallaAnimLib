@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrawlhallaAnimLib", "BrawlhallaAnimLib\BrawlhallaAnimLib.csproj", "{8068F25F-9306-4BB6-851F-5A30D1C11D3C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrawlhallaAnimLib", "BrawlhallaAnimLib.csproj", "{8068F25F-9306-4BB6-851F-5A30D1C11D3C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
