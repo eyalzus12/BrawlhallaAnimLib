@@ -8,7 +8,7 @@ using SwfLib.Tags;
 using SwfLib.Tags.ControlTags;
 using SwfLib.Tags.ShapeTags;
 
-namespace BrawlhallaAnimLib.Swf;
+namespace BrawlhallaAnimLib.Loading.Swf;
 
 public class SwfFileData
 {

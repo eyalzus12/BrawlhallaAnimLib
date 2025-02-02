@@ -5,6 +5,9 @@ Transform matrix layout:
 ScaleX      SkewX       TranslateX
 SkewY       ScaleY      TranslateY
 0           0           1
+
+SkewX = RotateSkew1
+SkewY = RotateSkew0
 */
 
 public readonly record struct Transform2D(double ScaleX, double SkewX, double SkewY, double ScaleY, double TranslateX, double TranslateY)
@@ -24,7 +27,6 @@ public readonly record struct Transform2D(double ScaleX, double SkewX, double Sk
         CreateSkew(skewX, skewY) *
         CreateScale(scaleX, scaleY);
 
-    //I hope this is correct
     public static Transform2D operator *(Transform2D t1, Transform2D t2) => new(
         t1.ScaleX * t2.ScaleX + t1.SkewX * t2.SkewY,
         t1.ScaleX * t2.SkewX + t1.SkewX * t2.ScaleY,
@@ -45,11 +47,17 @@ public readonly record struct Transform2D(double ScaleX, double SkewX, double Sk
         t.TranslateX * f, t.TranslateY * f
     );
 
-    public static Transform2D CreateInverse(Transform2D t)
+    public static bool Invert(Transform2D t, out Transform2D inverse)
     {
-        double invDet = 1.0f / t.Determinant;
+        double det = t.Determinant;
+        if (det == 0)
+        {
+            inverse = default;
+            return false;
+        }
 
-        return new()
+        double invDet = 1.0f / t.Determinant;
+        inverse = new()
         {
             ScaleX = t.ScaleY * invDet,
             SkewY = -t.SkewY * invDet,
@@ -58,6 +66,7 @@ public readonly record struct Transform2D(double ScaleX, double SkewX, double Sk
             TranslateX = (t.SkewX * t.TranslateY - t.TranslateX * t.ScaleY) * invDet,
             TranslateY = (t.TranslateX * t.SkewY - t.ScaleX * t.TranslateY) * invDet,
         };
+        return true;
     }
 
     public double Determinant => ScaleX * ScaleY - SkewX * SkewY;

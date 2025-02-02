@@ -2,7 +2,7 @@ using System;
 using SwfLib.Data;
 using SwfLib.Tags.DisplayListTags;
 
-namespace BrawlhallaAnimLib.Swf;
+namespace BrawlhallaAnimLib.Loading.Swf;
 
 public class SwfSpriteFrameLayer
 {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using SwfLib.Tags;
 using SwfLib.Tags.DisplayListTags;
 
-namespace BrawlhallaAnimLib.Swf;
+namespace BrawlhallaAnimLib.Loading.Swf;
 
 public class SwfSprite
 {

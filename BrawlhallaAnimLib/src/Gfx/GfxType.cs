@@ -1,37 +1,17 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using BrawlhallaAnimLib.Animation;
 
 namespace BrawlhallaAnimLib.Gfx;
 
 public interface IGfxType
 {
-    public enum AsymmetrySwapFlagEnum
-    {
-        HAND = 1,
-        FOREARM = 2,
-        ARM = 3,
-        SHOULDER = 4,
-        LEG = 5,
-        SHIN = 6,
-        FOOT = 7,
-        // 8 isn't settable through xml. it is TORSO.
-        GAUNTLETHAND = 9,
-        GAUNTLETFOREARM = 10,
-        PISTOL = 11,
-        KATAR = 12,
-        // 13 isn't settable through xml. it is JAW.
-        // 14 isn't settable through xml. it is EYES.
-        // 15 isn't settable through xml. might be BOOTS.
-        // 16 isn't settable through xml. it is MOUTH.
-        // 17 isn't settable through xml. it is HAIR.
-    }
-
     string AnimFile { get; set; }
     string AnimClass { get; set; }
     double AnimScale { get; set; }
     uint Tint { get; set; }
 
-    bool HasAsymmetrySwapFlag(AsymmetrySwapFlagEnum flag);
+    bool HasAsymmetrySwapFlag(BoneTypeEnum flag);
 
     IEnumerable<ICustomArt> CustomArts();
     IEnumerable<IColorSwap> ColorSwaps();

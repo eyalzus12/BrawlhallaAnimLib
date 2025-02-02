@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace BrawlhallaAnimLib.Animation;
 
-public static class BoneDatabase
+internal static class BoneDatabase
 {
     static BoneDatabase()
     {
@@ -535,7 +535,7 @@ public static class BoneDatabase
     }
 
     public static Dictionary<string, uint> ArtTypeDict { get; } = [];
-    public static Dictionary<string, (int, bool)> BoneTypeDict { get; } = [];
+    public static Dictionary<string, BoneType> BoneTypeDict { get; } = [];
     public static Dictionary<string, string> ForearmVariantDict { get; } = [];
     public static Dictionary<string, string> ShinVariantDict { get; } = [];
     public static Dictionary<string, string> KatarVariantDict { get; } = [];
@@ -548,10 +548,10 @@ public static class BoneDatabase
 
     public static void Register2(string name, uint artType, int boneType, bool dir, bool hasRVar = false)
     {
-        BoneTypeDict[name] = (boneType, dir);
+        BoneTypeDict[name] = new((BoneTypeEnum)boneType, dir);
         if (hasRVar)
         {
-            BoneTypeDict[name + "R"] = (boneType, dir);
+            BoneTypeDict[name + "R"] = new((BoneTypeEnum)boneType, dir);
             if (boneType == 2)
                 ForearmVariantDict[name] = name + "R";
             else if (boneType == 6)
