@@ -243,6 +243,7 @@ public sealed class AnimationBuilder(ILoader loader)
     private static void SetAsymBonesVisibility(IReadOnlyList<BoneInstance> bones, IGfxType gfx, bool spriteMirrored)
     {
         bool useRightTorso = gfx.UseRightTorso;
+        bool useTrueLeftRightTorso = gfx.UseTrueLeftRightTorso;
         bool useRightJaw = gfx.UseRightJaw;
         bool useRightEyes = gfx.UseRightEyes;
         bool useRightMouth = gfx.UseRightMouth;
@@ -285,6 +286,11 @@ public sealed class AnimationBuilder(ILoader loader)
             {
                 doVisibilitySwap();
                 useRightTorso = false;
+            }
+            else if (useTrueLeftRightTorso && instance.OgBoneName == "a_BotTorso")
+            {
+                doVisibilitySwap();
+                useTrueLeftRightTorso = false;
             }
             else if (useRightJaw && instance.OgBoneName == "a_Jaw")
             {

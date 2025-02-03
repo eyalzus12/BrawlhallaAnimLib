@@ -31,4 +31,7 @@ public interface IGfxType
     // these are set in weaponSkinType.csv
     bool UseRightGauntlet { get; }
     bool UseRightKatar { get; }
+    bool HideRightPistol2D { get; }
+    // these are set in SpawnBotTypes.xml
+    bool UseTrueLeftRightTorso { get; }
 }

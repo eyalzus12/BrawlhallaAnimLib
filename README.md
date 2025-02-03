@@ -4,5 +4,8 @@ A WIP library that implements brawlhalla's animation system.
 
 Still unsupported:
 * Swf color transforms
-* Extracting gfx types from weapon skin types (costume types are supported)
+* Extracting gfx types from:
+  * ~~Costume types~~
+  * Weapon skin types
+  * Spawn bot types
 * Testing
