@@ -381,6 +381,11 @@ public sealed class AnimationBuilder(ILoader loader)
 
         // filter to those that have a source in .a
         HashSet<uint> possibleSourceColors = new(a);
-        return [.. matchingColorSwaps.Where((cs) => possibleSourceColors.Contains(cs.OldColor))];
+        IColorSwap[] result = [.. matchingColorSwaps.Where((cs) => possibleSourceColors.Contains(cs.OldColor))];
+
+        // later color swaps have priority. reverse the array to give earlier color swaps priority.
+        Array.Reverse(result);
+
+        return result;
     }
 }
