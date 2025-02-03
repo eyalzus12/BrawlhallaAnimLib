@@ -5,12 +5,11 @@ using System.Linq;
 using BrawlhallaAnimLib.Bones;
 using BrawlhallaAnimLib.Gfx;
 using BrawlhallaAnimLib.Math;
-using BrawlhallaAnimLib.Loading;
 using BrawlhallaAnimLib.Anm;
 
 namespace BrawlhallaAnimLib;
 
-public sealed class AnimationBuilder(ISwfLoader swfLoader, IAnmLoader anmLoader, IBoneDataLoader boneDataLoader)
+public sealed class AnimationBuilder(ILoader loader)
 {
     // TODO: needs to be done using BoneSources.xml
     // although there are no swf files where this temp mapping doesn't work
@@ -35,10 +34,10 @@ public sealed class AnimationBuilder(ISwfLoader swfLoader, IAnmLoader anmLoader,
         // anm animation
         if (IsAnmAnimation(gfx.AnimFile))
         {
-            anmLoader.LoadAnm(animFile);
-            if (!anmLoader.IsAnmLoaded(animFile))
+            loader.LoadAnm(animFile);
+            if (!loader.IsAnmLoaded(animFile))
                 return null;
-            if (!anmLoader.TryGetAnmClass($"{gfx.AnimFile}/{gfx.AnimClass}", out IAnmClass? anmClass))
+            if (!loader.TryGetAnmClass($"{gfx.AnimFile}/{gfx.AnimClass}", out IAnmClass? anmClass))
                 throw new ArgumentException($"Could not find anim class {gfx.AnimClass} in {animFile}");
             if (!anmClass.TryGetAnimation(animName, out IAnmAnimation? animation))
                 throw new ArgumentException($"No animation {animName} in anim class {gfx.AnimClass}");
@@ -108,8 +107,8 @@ public sealed class AnimationBuilder(ISwfLoader swfLoader, IAnmLoader anmLoader,
 
     private List<BoneInstance>? GetBoneInstances(IAnmBone[] bones, IGfxType gfx)
     {
-        boneDataLoader.LoadBoneTypes();
-        if (!boneDataLoader.IsBoneTypesLoaded())
+        loader.LoadBoneTypes();
+        if (!loader.IsBoneTypesLoaded())
             return null;
 
         List<BoneInstance> instances = [];
@@ -117,7 +116,7 @@ public sealed class AnimationBuilder(ISwfLoader swfLoader, IAnmLoader anmLoader,
         string handBoneName = "";
         foreach (IAnmBone bone in bones)
         {
-            if (!boneDataLoader.TryGetBoneName(bone.Id, out string? boneName))
+            if (!loader.TryGetBoneName(bone.Id, out string? boneName))
                 throw new ArgumentException($"Could not find bone name for id {bone.Id}");
 
             BoneType? boneType;
@@ -213,10 +212,10 @@ public sealed class AnimationBuilder(ISwfLoader swfLoader, IAnmLoader anmLoader,
             if ((right || !ca.Right) && (artType == 0 || ca.Type == 0 || ca.Type == artType))
             {
                 string caPath = GetRealSwfPath(ca.FileName);
-                swfLoader.LoadSwf(caPath);
-                if (!swfLoader.IsSwfLoaded(caPath))
+                loader.LoadSwf(caPath);
+                if (!loader.IsSwfLoaded(caPath))
                     return false;
-                if (swfLoader.TryGetSymbolId(caPath, $"{boneName}_{ca.Name}", out _))
+                if (loader.TryGetSymbolId(caPath, $"{boneName}_{ca.Name}", out _))
                 {
                     chosen = ca;
                     return true;

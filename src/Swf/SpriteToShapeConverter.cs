@@ -1,14 +1,13 @@
 using System;
 using System.Collections.Generic;
 using BrawlhallaAnimLib.Bones;
-using BrawlhallaAnimLib.Loading;
 using BrawlhallaAnimLib.Math;
 using SwfLib.Tags;
 using SwfLib.Tags.ShapeTags;
 
 namespace BrawlhallaAnimLib.Swf;
 
-public sealed class SpriteToShapeConverter(ISwfLoader swfLoader)
+public sealed class SpriteToShapeConverter(ILoader loader)
 {
     public BoneShape[]? ConvertToShapes(BoneSprite boneSprite)
     {
@@ -18,10 +17,10 @@ public sealed class SpriteToShapeConverter(ISwfLoader swfLoader)
         if (boneSprite is BoneSpriteWithName boneSpriteWithName)
         {
             spriteName = boneSpriteWithName.SpriteName;
-            swfLoader.LoadSwf(swfPath);
-            if (!swfLoader.IsSwfLoaded(swfPath))
+            loader.LoadSwf(swfPath);
+            if (!loader.IsSwfLoaded(swfPath))
                 return null;
-            if (!swfLoader.TryGetSymbolId(swfPath, spriteName, out spriteId))
+            if (!loader.TryGetSymbolId(swfPath, spriteName, out spriteId))
                 throw new ArgumentException($"Sprite {spriteName} not found in {swfPath}");
         }
         else if (boneSprite is BoneSpriteWithId boneSpriteWithId)
@@ -34,7 +33,7 @@ public sealed class SpriteToShapeConverter(ISwfLoader swfLoader)
             throw new ArgumentException($"Unknown bone sprite type {boneSprite.GetType()}");
         }
 
-        if (!swfLoader.TryGetTag(swfPath, spriteId, out SwfTagBase? tag))
+        if (!loader.TryGetTag(swfPath, spriteId, out SwfTagBase? tag))
             throw new ArgumentException($"Tag id {spriteId} for sprite {spriteName} not found in {swfPath}");
         if (tag is not DefineSpriteTag spriteTag)
             throw new ArgumentException($"Tag id {spriteId} for sprite {spriteName} leads to a non-sprite tag in {swfPath}");
@@ -50,7 +49,7 @@ public sealed class SpriteToShapeConverter(ISwfLoader swfLoader)
         SwfSpriteFrame spriteFrame = sprite.Frames[frame];
         foreach ((ushort depth, SwfSpriteFrameLayer layer) in spriteFrame.Layers)
         {
-            if (!swfLoader.TryGetTag(swfPath, layer.CharacterId, out SwfTagBase? layerTag))
+            if (!loader.TryGetTag(swfPath, layer.CharacterId, out SwfTagBase? layerTag))
                 throw new ArgumentException($"Sprite {spriteName} has invalid character id {layer.CharacterId} at depth {depth}");
 
             Transform2D layerTransform = MathUtils.SwfMatrixToTransform(layer.Matrix);
