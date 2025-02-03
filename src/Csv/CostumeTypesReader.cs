@@ -16,7 +16,7 @@ public static class CostumeTypesCsvReader
         Type = 2,
     };
 
-    public static CostumeTypesGfxInfo GetGfxTypeInfo(ICsvRow row)
+    public static CostumeTypesGfxInfo GetGfxTypeInfo(ICsvRow row, IColorSchemeType colorScheme)
     {
         CostumeTypesGfxInfo gfx = new();
 
@@ -24,6 +24,12 @@ public static class CostumeTypesCsvReader
         List<ICustomArt>? swapCustomArts = null;
         ICustomArt? headCustomArt = null;
         ICustomArt? capeCustomArt = null;
+
+        List<IColorSwap>? baseColorSwaps = null;
+        Dictionary<ColorSchemeSwapEnum, uint>? swapDefines = null;
+        Dictionary<ColorSchemeSwapEnum, ColorSchemeSwapEnum>? swapTypeFallback = null;
+        Dictionary<ColorSchemeSwapEnum, uint>? directSwaps = null;
+
         foreach ((string key, string value) in row.ColEntries)
         {
             if (value == "") continue;
@@ -59,7 +65,37 @@ public static class CostumeTypesCsvReader
             }
             else if (key.StartsWith("GfxType.ColorSwap"))
             {
-                gfx.ColorSwapsInternal.Add(FromColorSwapCell(value));
+                IColorSwap colorSwap = FromColorSwapCell(value);
+                baseColorSwaps ??= [];
+                baseColorSwaps.Add(colorSwap);
+            }
+            else if (key.EndsWith("_Define"))
+            {
+                string swap = key[..^"_Define".Length];
+                if (!Enum.TryParse<ColorSchemeSwapEnum>(swap, true, out ColorSchemeSwapEnum swapType))
+                    throw new ArgumentException($"Invalid swap {swap}");
+                swapDefines ??= [];
+                swapDefines[swapType] = uint.Parse(value, CultureInfo.InvariantCulture);
+            }
+            else if (key.EndsWith("_Swap"))
+            {
+                string swap = key[..^"_Define".Length];
+                if (!Enum.TryParse<ColorSchemeSwapEnum>(swap, true, out ColorSchemeSwapEnum swapType))
+                    throw new ArgumentException($"Invalid swap {swap}");
+
+                if (value.StartsWith("0x"))
+                {
+                    uint direct = Convert.ToUInt32(value, 16);
+                    directSwaps ??= [];
+                    directSwaps[swapType] = direct;
+                }
+                else
+                {
+                    if (!Enum.TryParse<ColorSchemeSwapEnum>(value, true, out ColorSchemeSwapEnum target))
+                        throw new ArgumentException($"Invalid swap {value}");
+                    swapTypeFallback ??= [];
+                    swapTypeFallback[swapType] = target;
+                }
             }
         }
 
@@ -70,6 +106,93 @@ public static class CostumeTypesCsvReader
         if (headCustomArt is not null)
             gfx.CustomArtsInternal.Add(headCustomArt);
         gfx.CustomArtsInternal.Add(capeCustomArt ?? NoCapeCustomArt);
+
+        // TODO: color exceptions
+
+        if (baseColorSwaps is not null)
+            gfx.ColorSwapsInternal.AddRange(baseColorSwaps);
+        ColorSchemeSwapEnum[] swapTypesList = Enum.GetValues<ColorSchemeSwapEnum>();
+        // color scheme
+        foreach (ColorSchemeSwapEnum swapType in swapTypesList)
+        {
+            uint sourceColor = swapDefines?.GetValueOrDefault(swapType, 0u) ?? 0;
+            if (sourceColor == 0) continue;
+            uint targetColor = colorScheme.GetSwap(swapType);
+            if (targetColor == 0) continue;
+            IColorSwap colorSwap = new InternalColorSwapImpl()
+            {
+                ArtType = 2,
+                OldColor = sourceColor,
+                NewColor = targetColor,
+            };
+            gfx.ColorSwapsInternal.Add(colorSwap);
+        }
+        // fallback from scheme
+        foreach (ColorSchemeSwapEnum swapType in swapTypesList)
+        {
+            // if has swap for this type, ignore
+            uint schemeTargetColor = colorScheme.GetSwap(swapType);
+            if (schemeTargetColor != 0) continue;
+            // get source for fallback
+            uint sourceColor = swapDefines?.GetValueOrDefault(swapType, 0u) ?? 0;
+            if (sourceColor == 0) continue;
+            // get fallback swap type
+            if (swapTypeFallback is null || !swapTypeFallback.TryGetValue(swapType, out ColorSchemeSwapEnum targetSwapType))
+                continue;
+            // get target from scheme
+            uint targetColor = colorScheme.GetSwap(targetSwapType);
+            if (targetColor == 0) continue;
+            IColorSwap colorSwap = new InternalColorSwapImpl()
+            {
+                ArtType = 2,
+                OldColor = sourceColor,
+                NewColor = targetColor,
+            };
+            gfx.ColorSwapsInternal.Add(colorSwap);
+        }
+        // defines as fallback
+        foreach (ColorSchemeSwapEnum swapType in swapTypesList)
+        {
+            // if has swap for this type, ignore
+            uint schemeTargetColor = colorScheme.GetSwap(swapType);
+            if (schemeTargetColor != 0) continue;
+            // get source for fallback
+            uint sourceColor = swapDefines?.GetValueOrDefault(swapType, 0u) ?? 0;
+            if (sourceColor == 0) continue;
+            // get fallback swap type
+            if (swapTypeFallback is null || !swapTypeFallback.TryGetValue(swapType, out ColorSchemeSwapEnum targetSwapType))
+                continue;
+            // get target from defines
+            uint targetColor = swapDefines?.GetValueOrDefault(targetSwapType, 0u) ?? 0;
+            if (targetColor == 0) continue;
+            IColorSwap colorSwap = new InternalColorSwapImpl()
+            {
+                ArtType = 2,
+                OldColor = sourceColor,
+                NewColor = targetColor,
+            };
+            gfx.ColorSwapsInternal.Add(colorSwap);
+        }
+        // direct swaps
+        foreach (ColorSchemeSwapEnum swapType in swapTypesList)
+        {
+            // if has swap for this type, ignore
+            uint schemeTargetColor = colorScheme.GetSwap(swapType);
+            if (schemeTargetColor != 0) continue;
+
+            // get source for fallback
+            uint sourceColor = swapDefines?.GetValueOrDefault(swapType, 0u) ?? 0;
+            if (sourceColor == 0) continue;
+            uint targetColor = directSwaps?.GetValueOrDefault(swapType, 0u) ?? 0;
+            if (targetColor == 0) continue;
+            IColorSwap colorSwap = new InternalColorSwapImpl()
+            {
+                ArtType = 2,
+                OldColor = sourceColor,
+                NewColor = targetColor,
+            };
+            gfx.ColorSwapsInternal.Add(colorSwap);
+        }
 
         return gfx;
     }
@@ -117,4 +240,6 @@ public static class CostumeTypesCsvReader
             NewColor = newColor,
         };
     }
+
+
 }
