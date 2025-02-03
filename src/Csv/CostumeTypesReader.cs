@@ -112,43 +112,46 @@ public static class CostumeTypesCsvReader
         if (baseColorSwaps is not null)
             gfx.ColorSwapsInternal.AddRange(baseColorSwaps);
         ColorSchemeSwapEnum[] swapTypesList = Enum.GetValues<ColorSchemeSwapEnum>();
-        // color scheme
-        foreach (ColorSchemeSwapEnum swapType in swapTypesList)
+        if (colorScheme is not null)
         {
-            uint sourceColor = swapDefines?.GetValueOrDefault(swapType, 0u) ?? 0;
-            if (sourceColor == 0) continue;
-            uint targetColor = colorScheme?.GetSwap(swapType) ?? 0;
-            if (targetColor == 0) continue;
-            IColorSwap colorSwap = new InternalColorSwapImpl()
+            // color scheme
+            foreach (ColorSchemeSwapEnum swapType in swapTypesList)
             {
-                ArtType = 2,
-                OldColor = sourceColor,
-                NewColor = targetColor,
-            };
-            gfx.ColorSwapsInternal.Add(colorSwap);
-        }
-        // fallback from scheme
-        foreach (ColorSchemeSwapEnum swapType in swapTypesList)
-        {
-            // if has swap for this type, ignore
-            uint schemeTargetColor = colorScheme?.GetSwap(swapType) ?? 0;
-            if (schemeTargetColor != 0) continue;
-            // get source for fallback
-            uint sourceColor = swapDefines?.GetValueOrDefault(swapType, 0u) ?? 0;
-            if (sourceColor == 0) continue;
-            // get fallback swap type
-            if (swapTypeFallback is null || !swapTypeFallback.TryGetValue(swapType, out ColorSchemeSwapEnum targetSwapType))
-                continue;
-            // get target from scheme
-            uint targetColor = colorScheme?.GetSwap(targetSwapType) ?? 0;
-            if (targetColor == 0) continue;
-            IColorSwap colorSwap = new InternalColorSwapImpl()
+                uint sourceColor = swapDefines?.GetValueOrDefault(swapType, 0u) ?? 0;
+                if (sourceColor == 0) continue;
+                uint targetColor = colorScheme.GetSwap(swapType);
+                if (targetColor == 0) continue;
+                IColorSwap colorSwap = new InternalColorSwapImpl()
+                {
+                    ArtType = 2,
+                    OldColor = sourceColor,
+                    NewColor = targetColor,
+                };
+                gfx.ColorSwapsInternal.Add(colorSwap);
+            }
+            // fallback from scheme
+            foreach (ColorSchemeSwapEnum swapType in swapTypesList)
             {
-                ArtType = 2,
-                OldColor = sourceColor,
-                NewColor = targetColor,
-            };
-            gfx.ColorSwapsInternal.Add(colorSwap);
+                // if has swap for this type, ignore
+                uint schemeTargetColor = colorScheme.GetSwap(swapType);
+                if (schemeTargetColor != 0) continue;
+                // get source for fallback
+                uint sourceColor = swapDefines?.GetValueOrDefault(swapType, 0u) ?? 0;
+                if (sourceColor == 0) continue;
+                // get fallback swap type
+                if (swapTypeFallback is null || !swapTypeFallback.TryGetValue(swapType, out ColorSchemeSwapEnum targetSwapType))
+                    continue;
+                // get target from scheme
+                uint targetColor = colorScheme.GetSwap(targetSwapType);
+                if (targetColor == 0) continue;
+                IColorSwap colorSwap = new InternalColorSwapImpl()
+                {
+                    ArtType = 2,
+                    OldColor = sourceColor,
+                    NewColor = targetColor,
+                };
+                gfx.ColorSwapsInternal.Add(colorSwap);
+            }
         }
         // defines as fallback
         foreach (ColorSchemeSwapEnum swapType in swapTypesList)
