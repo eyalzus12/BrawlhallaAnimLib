@@ -258,6 +258,8 @@ public sealed class AnimationBuilder(ILoader loader)
         int rightShinUses = gfx.UseRightShin ? 2 : 0;
         bool useRightLeg1 = gfx.UseRightLeg1;
         bool useRightLeg1Right = gfx.UseRightLeg1;
+        // TODO: this is not done in 3D, only in 2D. check the difference.
+        bool hideRightPistol2D = gfx.HideRightPistol2D;
         for (int i = 0; i < bones.Count; ++i)
         {
             BoneInstance instance = bones[i];
@@ -361,6 +363,16 @@ public sealed class AnimationBuilder(ILoader loader)
             {
                 doVisibilitySwap();
                 rightShinUses--;
+            }
+            else if (hideRightPistol2D)
+            {
+                bool rightPistol = instance.OgBoneName == "a_WeaponPistolRight";
+                bool firstPistol = instance.OgBoneName == "a_WeaponPistol" && bones[i + 1].OgBoneName == "a_WeaponPistol";
+                if (rightPistol || firstPistol)
+                {
+                    instance.Visible = false;
+                    hideRightPistol2D = false;
+                }
             }
         }
     }
