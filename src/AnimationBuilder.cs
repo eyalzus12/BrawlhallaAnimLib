@@ -56,10 +56,16 @@ public sealed class AnimationBuilder(ILoader loader)
             {
                 if (!instance.Visible)
                     continue;
+
                 string boneSwfPath = GetRealSwfPath(instance.FilePath);
 
                 IAnmBone bone = instance.Bone;
                 Transform2D boneTransform = new(bone.ScaleX, bone.RotateSkew1, bone.RotateSkew0, bone.ScaleY, bone.X, bone.Y);
+
+                IColorSwap[]? colorSwaps = FilterColorSwaps(instance, gfx.ColorSwaps);
+                if (colorSwaps is null)
+                    return null;
+
                 result.Add(new BoneSpriteWithName()
                 {
                     SwfFilePath = boneSwfPath,
@@ -68,8 +74,7 @@ public sealed class AnimationBuilder(ILoader loader)
                     AnimScale = gfx.AnimScale,
                     Transform = transform * boneTransform,
                     Tint = gfx.Tint,
-                    // TODO: implement correctly
-                    ColorSwaps = [.. gfx.ColorSwaps],
+                    ColorSwaps = colorSwaps,
                     Opacity = bone.Opacity,
                 });
             }
@@ -78,6 +83,17 @@ public sealed class AnimationBuilder(ILoader loader)
         // swf animation
         else
         {
+            BoneInstance fakeInstance = new()
+            {
+                FilePath = animFile,
+                OgBoneName = null!,
+                SpriteName = gfx.AnimClass,
+                Bone = null!,
+                Visible = true,
+            };
+            IColorSwap[]? colorSwaps = FilterColorSwaps(fakeInstance, gfx.ColorSwaps);
+            if (colorSwaps is null) return null;
+
             BoneSprite sprite = new BoneSpriteWithName()
             {
                 SwfFilePath = animFile,
@@ -86,8 +102,7 @@ public sealed class AnimationBuilder(ILoader loader)
                 AnimScale = gfx.AnimScale,
                 Transform = transform,
                 Tint = gfx.Tint,
-                // TODO: implement correctly
-                ColorSwaps = [.. gfx.ColorSwaps],
+                ColorSwaps = colorSwaps,
                 Opacity = 1,
             };
             return [sprite];
@@ -342,5 +357,30 @@ public sealed class AnimationBuilder(ILoader loader)
                 rightShinUses--;
             }
         }
+    }
+
+    private IColorSwap[]? FilterColorSwaps(BoneInstance instance, IEnumerable<IColorSwap> colorSwaps)
+    {
+        uint artType = BoneDatabase.ArtTypeDict.GetValueOrDefault(instance.OgBoneName, 0u);
+        IEnumerable<IColorSwap> matchingColorSwaps = colorSwaps.Where((cs) =>
+        {
+            return cs.ArtType == 0 || cs.ArtType == artType;
+        });
+
+        // no swaps left
+        if (!matchingColorSwaps.Any()) return [];
+
+        string boneSwfPath = GetRealSwfPath(instance.FilePath);
+        // now get .a
+        loader.LoadSwf(boneSwfPath);
+        if (!loader.IsSwfLoaded(boneSwfPath))
+            return null;
+        // no .a
+        if (!loader.TryGetScriptAVar(boneSwfPath, instance.SpriteName, out uint[]? a))
+            return [];
+
+        // filter to those that have a source in .a
+        HashSet<uint> possibleSourceColors = new(a);
+        return [.. matchingColorSwaps.Where((cs) => possibleSourceColors.Contains(cs.OldColor))];
     }
 }
