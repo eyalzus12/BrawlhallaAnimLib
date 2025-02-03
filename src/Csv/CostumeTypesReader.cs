@@ -16,7 +16,7 @@ public static class CostumeTypesCsvReader
         Type = 2,
     };
 
-    public static CostumeTypesGfxInfo GetGfxTypeInfo(ICsvRow row, IColorSchemeType colorScheme)
+    public static CostumeTypesGfxInfo GetGfxTypeInfo(ICsvRow row, IColorSchemeType? colorScheme)
     {
         CostumeTypesGfxInfo gfx = new();
 
@@ -117,7 +117,7 @@ public static class CostumeTypesCsvReader
         {
             uint sourceColor = swapDefines?.GetValueOrDefault(swapType, 0u) ?? 0;
             if (sourceColor == 0) continue;
-            uint targetColor = colorScheme.GetSwap(swapType);
+            uint targetColor = colorScheme?.GetSwap(swapType) ?? 0;
             if (targetColor == 0) continue;
             IColorSwap colorSwap = new InternalColorSwapImpl()
             {
@@ -131,7 +131,7 @@ public static class CostumeTypesCsvReader
         foreach (ColorSchemeSwapEnum swapType in swapTypesList)
         {
             // if has swap for this type, ignore
-            uint schemeTargetColor = colorScheme.GetSwap(swapType);
+            uint schemeTargetColor = colorScheme?.GetSwap(swapType) ?? 0;
             if (schemeTargetColor != 0) continue;
             // get source for fallback
             uint sourceColor = swapDefines?.GetValueOrDefault(swapType, 0u) ?? 0;
@@ -140,7 +140,7 @@ public static class CostumeTypesCsvReader
             if (swapTypeFallback is null || !swapTypeFallback.TryGetValue(swapType, out ColorSchemeSwapEnum targetSwapType))
                 continue;
             // get target from scheme
-            uint targetColor = colorScheme.GetSwap(targetSwapType);
+            uint targetColor = colorScheme?.GetSwap(targetSwapType) ?? 0;
             if (targetColor == 0) continue;
             IColorSwap colorSwap = new InternalColorSwapImpl()
             {
@@ -154,7 +154,7 @@ public static class CostumeTypesCsvReader
         foreach (ColorSchemeSwapEnum swapType in swapTypesList)
         {
             // if has swap for this type, ignore
-            uint schemeTargetColor = colorScheme.GetSwap(swapType);
+            uint schemeTargetColor = colorScheme?.GetSwap(swapType) ?? 0;
             if (schemeTargetColor != 0) continue;
             // get source for fallback
             uint sourceColor = swapDefines?.GetValueOrDefault(swapType, 0u) ?? 0;
@@ -177,7 +177,7 @@ public static class CostumeTypesCsvReader
         foreach (ColorSchemeSwapEnum swapType in swapTypesList)
         {
             // if has swap for this type, ignore
-            uint schemeTargetColor = colorScheme.GetSwap(swapType);
+            uint schemeTargetColor = colorScheme?.GetSwap(swapType) ?? 0;
             if (schemeTargetColor != 0) continue;
 
             // get source for fallback
