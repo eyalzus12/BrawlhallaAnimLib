@@ -221,10 +221,12 @@ public sealed class AnimationBuilder(ILoader loader)
     {
         chosen = null;
 
-        uint artType = BoneDatabase.ArtTypeDict.GetValueOrDefault(ogBoneName, 0u);
+        ArtTypeEnum artType = BoneDatabase.ArtTypeDict.GetValueOrDefault(ogBoneName, ArtTypeEnum.None);
         foreach (ICustomArt ca in customArts.Reverse())
         {
-            if ((right || !ca.Right) && (artType == 0 || ca.Type == 0 || ca.Type == artType))
+            bool rightMatches = right || !ca.Right;
+            bool artTypeMatches = artType == ArtTypeEnum.None || ca.Type == ArtTypeEnum.None || ca.Type == artType;
+            if (rightMatches && artTypeMatches)
             {
                 string caPath = GetRealSwfPath(ca.FileName);
                 loader.LoadSwf(caPath);
@@ -378,10 +380,10 @@ public sealed class AnimationBuilder(ILoader loader)
 
     private IColorSwap[]? FilterColorSwaps(BoneInstance instance, IEnumerable<IColorSwap> colorSwaps)
     {
-        uint artType = BoneDatabase.ArtTypeDict.GetValueOrDefault(instance.OgBoneName, 0u);
+        ArtTypeEnum artType = BoneDatabase.ArtTypeDict.GetValueOrDefault(instance.OgBoneName, ArtTypeEnum.None);
         IEnumerable<IColorSwap> matchingColorSwaps = colorSwaps.Where((cs) =>
         {
-            return cs.ArtType == 0 || cs.ArtType == artType;
+            return cs.ArtType == ArtTypeEnum.None || cs.ArtType == artType;
         });
 
         // no swaps left

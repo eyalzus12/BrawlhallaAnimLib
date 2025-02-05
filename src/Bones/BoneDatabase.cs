@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BrawlhallaAnimLib.Gfx;
 
 namespace BrawlhallaAnimLib.Bones;
 
@@ -543,7 +544,7 @@ internal static class BoneDatabase
         Register1("a_SwooshSpAttackAirDown", 1);
     }
 
-    public static Dictionary<string, uint> ArtTypeDict { get; } = [];
+    public static Dictionary<string, ArtTypeEnum> ArtTypeDict { get; } = [];
     public static Dictionary<string, BoneType> BoneTypeDict { get; } = [];
     public static Dictionary<string, string> ForearmVariantDict { get; } = [];
     public static Dictionary<string, string> ShinVariantDict { get; } = [];
@@ -552,7 +553,7 @@ internal static class BoneDatabase
 
     private static void Register1(string name, uint artType)
     {
-        ArtTypeDict[name] = artType;
+        ArtTypeDict[name] = (ArtTypeEnum)artType;
     }
 
     private static void Register2(string name, uint artType, int boneType, bool dir, bool hasRVar = false)

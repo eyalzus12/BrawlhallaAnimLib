@@ -13,7 +13,7 @@ public static class CostumeTypesCsvReader
     {
         FileName = "Gfx_Player.swf",
         Name = "NoCape",
-        Type = 2,
+        Type = ArtTypeEnum.Costume,
     };
 
     public static CostumeTypesGfxInfo GetGfxTypeInfo(ICsvRow row, IColorSchemeType? colorScheme)
@@ -48,20 +48,20 @@ public static class CostumeTypesCsvReader
             else if (key.StartsWith("GfxType.CustomArt"))
             {
                 baseCustomArts ??= [];
-                baseCustomArts.Add(FromCustomArtCell(value, true, 2));
+                baseCustomArts.Add(FromCustomArtCell(value, true, ArtTypeEnum.Costume));
             }
             else if (key.StartsWith("SwapCustomArt"))
             {
                 swapCustomArts ??= [];
-                swapCustomArts.Add(FromCustomArtCell(value, false, 0));
+                swapCustomArts.Add(FromCustomArtCell(value, false, ArtTypeEnum.None));
             }
             else if (key == "HeadGfxCustomArt")
             {
-                headCustomArt = FromCustomArtCell(value, false, 0);
+                headCustomArt = FromCustomArtCell(value, false, ArtTypeEnum.None);
             }
             else if (key == "DefaultCape")
             {
-                capeCustomArt = FromCustomArtCell(value, true, 2);
+                capeCustomArt = FromCustomArtCell(value, true, ArtTypeEnum.Costume);
             }
             else if (key.StartsWith("GfxType.ColorSwap"))
             {
@@ -123,7 +123,7 @@ public static class CostumeTypesCsvReader
                 if (targetColor == 0) continue;
                 IColorSwap colorSwap = new InternalColorSwapImpl()
                 {
-                    ArtType = 2,
+                    ArtType = ArtTypeEnum.Costume,
                     OldColor = sourceColor,
                     NewColor = targetColor,
                 };
@@ -146,7 +146,7 @@ public static class CostumeTypesCsvReader
                 if (targetColor == 0) continue;
                 IColorSwap colorSwap = new InternalColorSwapImpl()
                 {
-                    ArtType = 2,
+                    ArtType = ArtTypeEnum.Costume,
                     OldColor = sourceColor,
                     NewColor = targetColor,
                 };
@@ -170,7 +170,7 @@ public static class CostumeTypesCsvReader
             if (targetColor == 0) continue;
             IColorSwap colorSwap = new InternalColorSwapImpl()
             {
-                ArtType = 2,
+                ArtType = ArtTypeEnum.Costume,
                 OldColor = sourceColor,
                 NewColor = targetColor,
             };
@@ -190,7 +190,7 @@ public static class CostumeTypesCsvReader
             if (targetColor == 0) continue;
             IColorSwap colorSwap = new InternalColorSwapImpl()
             {
-                ArtType = 2,
+                ArtType = ArtTypeEnum.Costume,
                 OldColor = sourceColor,
                 NewColor = targetColor,
             };
@@ -200,11 +200,13 @@ public static class CostumeTypesCsvReader
         return gfx;
     }
 
-    private static InternalCustomArtImpl FromCustomArtCell(string value, bool grabType, int defaultType)
+    private static InternalCustomArtImpl FromCustomArtCell(string value, bool grabType, ArtTypeEnum defaultType)
     {
         bool right = grabType && value.StartsWith("RIGHT:");
-        int type = grabType ? right ? 0 : (value.StartsWith("C:") ? 2 : (value.StartsWith("W:") ? 1 : 0)) : 0;
-        if (type == 0) type = defaultType;
+
+        ArtTypeEnum type = defaultType;
+        if (value.StartsWith("C:")) type = ArtTypeEnum.Costume;
+        else if (value.StartsWith("W:")) type = ArtTypeEnum.Weapon;
 
         string rest = grabType ? value[(value.IndexOf(':') + 1)..] : value;
         string[] parts = rest.Split('/');
@@ -238,7 +240,7 @@ public static class CostumeTypesCsvReader
 
         return new InternalColorSwapImpl()
         {
-            ArtType = 1,
+            ArtType = ArtTypeEnum.Costume,
             OldColor = oldColor,
             NewColor = newColor,
         };

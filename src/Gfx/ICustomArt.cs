@@ -3,17 +3,7 @@ namespace BrawlhallaAnimLib.Gfx;
 public interface ICustomArt
 {
     bool Right { get; }
-
-    /*
-    types:
-    0 - none
-    1 - weapon
-    2 - costume
-    3 - pickup (can't be set in xml)
-    4 - flag? (can't be set in xml)
-    5 - bot? (can't be set in xml)
-    */
-    int Type { get; }
+    ArtTypeEnum Type { get; }
 
     string FileName { get; }
     string Name { get; }
