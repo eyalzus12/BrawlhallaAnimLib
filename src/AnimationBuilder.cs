@@ -27,7 +27,7 @@ public sealed class AnimationBuilder(ILoader loader)
     }
 
     // null if not loaded yet
-    public BoneSprite[]? BuildAnim(IGfxType gfx, string animName, long frame, Transform2D transform)
+    public BoneSprite[]? BuildAnim(IGfxType gfx, string animName, long frame, Transform2D transform, bool isTooltip = false)
     {
         string animFile = GetRealSwfPath(gfx.AnimFile);
 
@@ -49,7 +49,7 @@ public sealed class AnimationBuilder(ILoader loader)
             List<BoneInstance>? bones = GetBoneInstances(anmFrame.Bones, gfx);
             if (bones is null) return null;
 
-            SetAsymBonesVisibility(bones, gfx, transform.ScaleX * transform.ScaleY < 0);
+            SetAsymBonesVisibility(bones, gfx, transform.ScaleX * transform.ScaleY < 0, isTooltip);
 
             List<BoneSprite> result = [];
             foreach (BoneInstance instance in bones)
@@ -240,7 +240,7 @@ public sealed class AnimationBuilder(ILoader loader)
         return true;
     }
 
-    private static void SetAsymBonesVisibility(IReadOnlyList<BoneInstance> bones, IGfxType gfx, bool spriteMirrored)
+    private static void SetAsymBonesVisibility(IReadOnlyList<BoneInstance> bones, IGfxType gfx, bool spriteMirrored, bool isTooltip = false)
     {
         bool useRightTorso = gfx.UseRightTorso;
         bool useTrueLeftRightTorso = gfx.UseTrueLeftRightTorso;
@@ -258,8 +258,7 @@ public sealed class AnimationBuilder(ILoader loader)
         int rightShinUses = gfx.UseRightShin ? 2 : 0;
         bool useRightLeg1 = gfx.UseRightLeg1;
         bool useRightLeg1Right = gfx.UseRightLeg1;
-        // TODO: this is not done in 3D, only in 2D. check the difference.
-        bool hideRightPistol2D = gfx.HideRightPistol2D;
+        bool hideRightPistol2D = gfx.HidePaperDollRightPistol && gfx.HideRightPistol2D && isTooltip;
         for (int i = 0; i < bones.Count; ++i)
         {
             BoneInstance instance = bones[i];

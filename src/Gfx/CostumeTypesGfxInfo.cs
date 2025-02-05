@@ -25,6 +25,7 @@ public sealed class CostumeTypesGfxInfo
     public bool UseRightLeg1 { get; internal set; }
     public bool UseRightShin { get; internal set; }
     public bool UseTrueLeftRightHands { get; internal set; }
+    public bool HidePaperDollRightPistol { get; internal set; }
 
     internal Dictionary<string, string> BoneOverrides { get; set; } = [];
     public bool TryGetBoneOverride(string bone, [MaybeNullWhen(false)] out string newBone) => BoneOverrides.TryGetValue(bone, out newBone);

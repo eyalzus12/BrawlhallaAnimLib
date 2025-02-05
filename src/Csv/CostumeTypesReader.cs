@@ -38,7 +38,7 @@ public static class CostumeTypesCsvReader
             {
                 uint asf = value.Split(",").Select((flag) =>
                 {
-                    if (Enum.TryParse<BoneTypeEnum>(flag, out BoneTypeEnum result))
+                    if (Enum.TryParse(flag, out BoneTypeEnum result))
                         return 1u << (int)result;
                     return 0u;
                 }).Aggregate((a, v) => a | v);
@@ -72,7 +72,7 @@ public static class CostumeTypesCsvReader
             else if (key.EndsWith("_Define"))
             {
                 string swap = key[..^"_Define".Length];
-                if (!Enum.TryParse<ColorSchemeSwapEnum>(swap, true, out ColorSchemeSwapEnum swapType))
+                if (!Enum.TryParse(swap, true, out ColorSchemeSwapEnum swapType))
                     throw new ArgumentException($"Invalid swap {swap}");
                 swapDefines ??= [];
                 swapDefines[swapType] = uint.Parse(value, CultureInfo.InvariantCulture);
@@ -80,7 +80,7 @@ public static class CostumeTypesCsvReader
             else if (key.EndsWith("_Swap"))
             {
                 string swap = key[..^"_Define".Length];
-                if (!Enum.TryParse<ColorSchemeSwapEnum>(swap, true, out ColorSchemeSwapEnum swapType))
+                if (!Enum.TryParse(swap, true, out ColorSchemeSwapEnum swapType))
                     throw new ArgumentException($"Invalid swap {swap}");
 
                 if (value.StartsWith("0x"))
@@ -91,7 +91,7 @@ public static class CostumeTypesCsvReader
                 }
                 else
                 {
-                    if (!Enum.TryParse<ColorSchemeSwapEnum>(value, true, out ColorSchemeSwapEnum target))
+                    if (!Enum.TryParse(value, true, out ColorSchemeSwapEnum target))
                         throw new ArgumentException($"Invalid swap {value}");
                     swapTypeFallback ??= [];
                     swapTypeFallback[swapType] = target;
@@ -200,9 +200,9 @@ public static class CostumeTypesCsvReader
         return gfx;
     }
 
-    private static ICustomArt FromCustomArtCell(string value, bool grabType, int defaultType)
+    private static InternalCustomArtImpl FromCustomArtCell(string value, bool grabType, int defaultType)
     {
-        bool right = grabType ? value.StartsWith("RIGHT:") : false;
+        bool right = grabType && value.StartsWith("RIGHT:");
         int type = grabType ? right ? 0 : (value.StartsWith("C:") ? 2 : (value.StartsWith("W:") ? 1 : 0)) : 0;
         if (type == 0) type = defaultType;
 
@@ -220,7 +220,7 @@ public static class CostumeTypesCsvReader
         };
     }
 
-    private static IColorSwap FromColorSwapCell(string value)
+    private static InternalColorSwapImpl FromColorSwapCell(string value)
     {
         string[] parts = value.Split('=');
         if (parts.Length != 2)
@@ -243,6 +243,4 @@ public static class CostumeTypesCsvReader
             NewColor = newColor,
         };
     }
-
-
 }
