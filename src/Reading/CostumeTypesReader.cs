@@ -36,7 +36,7 @@ public static class CostumeTypesCsvReader
 
             if (key == "GfxType.AsymmetrySwapFlags")
             {
-                uint asf = value.Split(",").Select((flag) =>
+                uint asf = value.Split(",").Select(static (flag) =>
                 {
                     if (Enum.TryParse(flag, out BoneTypeEnum result))
                         return 1u << (int)result;

@@ -10,9 +10,9 @@ public sealed class CostumeTypesGfxInfo
     internal uint BoneTypeFlags { get; set; } = 0;
     public bool HasAsymmetrySwapFlag(BoneTypeEnum flag) => (BoneTypeFlags & (1u << (int)flag)) != 0;
 
-    internal List<ICustomArt> CustomArtsInternal = [];
+    internal List<InternalCustomArtImpl> CustomArtsInternal = [];
     public IEnumerable<ICustomArt> CustomArts => CustomArtsInternal;
-    internal List<IColorSwap> ColorSwapsInternal = [];
+    internal List<InternalColorSwapImpl> ColorSwapsInternal = [];
     public IEnumerable<IColorSwap> ColorSwaps => ColorSwapsInternal;
 
     // these are set in costumeTypes.csv.
