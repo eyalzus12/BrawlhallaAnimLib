@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BrawlhallaAnimLib.Csv;
+namespace BrawlhallaAnimLib.Reading;
 
 public interface ICsvRow
 {

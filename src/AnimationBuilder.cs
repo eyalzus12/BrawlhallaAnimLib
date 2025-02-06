@@ -268,7 +268,7 @@ public sealed class AnimationBuilder(ILoader loader)
         int rightShinUses = gfx.UseRightShin ? 2 : 0;
         bool useRightLeg1 = gfx.UseRightLeg1;
         bool useRightLeg1Right = gfx.UseRightLeg1;
-        bool hideRightPistol2D = gfx.HidePaperDollRightPistol && gfx.HideRightPistol2D && isTooltip;
+        bool hideRightPistol2D = isTooltip && gfx.HidePaperDollRightPistol && gfx.HideRightPistol2D;
         for (int i = 0; i < bones.Count; ++i)
         {
             BoneInstance instance = bones[i];

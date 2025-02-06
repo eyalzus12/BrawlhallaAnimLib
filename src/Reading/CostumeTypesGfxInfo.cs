@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using BrawlhallaAnimLib.Bones;
+using BrawlhallaAnimLib.Gfx;
 
-namespace BrawlhallaAnimLib.Gfx;
+namespace BrawlhallaAnimLib.Reading;
 
 public sealed class CostumeTypesGfxInfo
 {

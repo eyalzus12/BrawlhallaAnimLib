@@ -5,11 +5,11 @@ using System.Linq;
 using BrawlhallaAnimLib.Bones;
 using BrawlhallaAnimLib.Gfx;
 
-namespace BrawlhallaAnimLib.Csv;
+namespace BrawlhallaAnimLib.Reading;
 
 public static class CostumeTypesCsvReader
 {
-    private static ICustomArt NoCapeCustomArt => new InternalCustomArtImpl()
+    private static InternalCustomArtImpl NoCapeCustomArt => new()
     {
         FileName = "Gfx_Player.swf",
         Name = "NoCape",
@@ -20,12 +20,12 @@ public static class CostumeTypesCsvReader
     {
         CostumeTypesGfxInfo gfx = new();
 
-        List<ICustomArt>? baseCustomArts = null;
-        List<ICustomArt>? swapCustomArts = null;
-        ICustomArt? headCustomArt = null;
-        ICustomArt? capeCustomArt = null;
+        List<InternalCustomArtImpl>? baseCustomArts = null;
+        List<InternalCustomArtImpl>? swapCustomArts = null;
+        InternalCustomArtImpl? headCustomArt = null;
+        InternalCustomArtImpl? capeCustomArt = null;
 
-        List<IColorSwap>? baseColorSwaps = null;
+        List<InternalColorSwapImpl>? baseColorSwaps = null;
         Dictionary<ColorSchemeSwapEnum, uint>? swapDefines = null;
         Dictionary<ColorSchemeSwapEnum, ColorSchemeSwapEnum>? swapTypeFallback = null;
         Dictionary<ColorSchemeSwapEnum, uint>? directSwaps = null;
@@ -44,6 +44,55 @@ public static class CostumeTypesCsvReader
                 }).Aggregate((a, v) => a | v);
 
                 gfx.BoneTypeFlags = asf;
+            }
+            else if (key == "BoneOverride")
+            {
+                string[] parts = value.Split(',');
+                gfx.BoneOverrides[parts[0]] = parts[1];
+            }
+            else if (key == "UseRightTorso")
+            {
+                gfx.UseRightTorso = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+            }
+            else if (key == "UseRightJaw")
+            {
+                gfx.UseRightJaw = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+            }
+            else if (key == "UseRightEyes")
+            {
+                gfx.UseRightEyes = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+            }
+            else if (key == "UseRightHair")
+            {
+                gfx.UseRightHair = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+            }
+            else if (key == "UseRightMouth")
+            {
+                gfx.UseRightMouth = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+            }
+            else if (key == "UseRightForearm")
+            {
+                gfx.UseRightForearm = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+            }
+            else if (key == "UseRightShoulder1")
+            {
+                gfx.UseRightShoulder1 = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+            }
+            else if (key == "UseRightLeg1")
+            {
+                gfx.UseRightLeg1 = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+            }
+            else if (key == "UseRightShin")
+            {
+                gfx.UseRightShin = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+            }
+            else if (key == "UseTrueLeftRightHands")
+            {
+                gfx.UseTrueLeftRightHands = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+            }
+            else if (key == "HidePaperDollRightPistol")
+            {
+                gfx.HidePaperDollRightPistol = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
             }
             else if (key.StartsWith("GfxType.CustomArt"))
             {
@@ -65,7 +114,7 @@ public static class CostumeTypesCsvReader
             }
             else if (key.StartsWith("GfxType.ColorSwap"))
             {
-                IColorSwap colorSwap = FromColorSwapCell(value);
+                InternalColorSwapImpl colorSwap = FromColorSwapCell(value);
                 baseColorSwaps ??= [];
                 baseColorSwaps.Add(colorSwap);
             }
@@ -121,7 +170,7 @@ public static class CostumeTypesCsvReader
                 if (sourceColor == 0) continue;
                 uint targetColor = colorScheme.GetSwap(swapType);
                 if (targetColor == 0) continue;
-                IColorSwap colorSwap = new InternalColorSwapImpl()
+                InternalColorSwapImpl colorSwap = new()
                 {
                     ArtType = ArtTypeEnum.Costume,
                     OldColor = sourceColor,
@@ -144,7 +193,7 @@ public static class CostumeTypesCsvReader
                 // get target from scheme
                 uint targetColor = colorScheme.GetSwap(targetSwapType);
                 if (targetColor == 0) continue;
-                IColorSwap colorSwap = new InternalColorSwapImpl()
+                InternalColorSwapImpl colorSwap = new()
                 {
                     ArtType = ArtTypeEnum.Costume,
                     OldColor = sourceColor,
@@ -168,7 +217,7 @@ public static class CostumeTypesCsvReader
             // get target from defines
             uint targetColor = swapDefines?.GetValueOrDefault(targetSwapType, 0u) ?? 0;
             if (targetColor == 0) continue;
-            IColorSwap colorSwap = new InternalColorSwapImpl()
+            InternalColorSwapImpl colorSwap = new()
             {
                 ArtType = ArtTypeEnum.Costume,
                 OldColor = sourceColor,
@@ -188,7 +237,7 @@ public static class CostumeTypesCsvReader
             if (sourceColor == 0) continue;
             uint targetColor = directSwaps?.GetValueOrDefault(swapType, 0u) ?? 0;
             if (targetColor == 0) continue;
-            IColorSwap colorSwap = new InternalColorSwapImpl()
+            InternalColorSwapImpl colorSwap = new()
             {
                 ArtType = ArtTypeEnum.Costume,
                 OldColor = sourceColor,
@@ -213,7 +262,7 @@ public static class CostumeTypesCsvReader
         string fileName = parts[0];
         string name = parts[1];
 
-        return new InternalCustomArtImpl()
+        return new()
         {
             Right = right,
             Type = type,
@@ -238,7 +287,7 @@ public static class CostumeTypesCsvReader
             throw new NotImplementedException($"Color swap color must start with 0");
         uint newColor = uint.Parse(newColorString, CultureInfo.InvariantCulture);
 
-        return new InternalColorSwapImpl()
+        return new()
         {
             ArtType = ArtTypeEnum.Costume,
             OldColor = oldColor,
