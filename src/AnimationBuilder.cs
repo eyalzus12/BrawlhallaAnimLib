@@ -27,7 +27,7 @@ public sealed class AnimationBuilder(ILoader loader)
     }
 
     // null if not loaded yet
-    public BoneSprite[]? BuildAnim(IGfxType gfx, string animName, long frame, Transform2D transform, bool isTooltip = false)
+    public BoneSpriteWithName[]? BuildAnim(IGfxType gfx, string animName, long frame, Transform2D transform, bool isTooltip = false)
     {
         string animFile = GetRealSwfPath(gfx.AnimFile);
 
@@ -51,7 +51,7 @@ public sealed class AnimationBuilder(ILoader loader)
 
             SetAsymBonesVisibility(bones, gfx, transform.ScaleX * transform.ScaleY < 0, isTooltip);
 
-            List<BoneSprite> result = [];
+            List<BoneSpriteWithName> result = [];
             foreach (BoneInstance instance in bones)
             {
                 if (!instance.Visible)
@@ -62,11 +62,7 @@ public sealed class AnimationBuilder(ILoader loader)
                 IAnmBone bone = instance.Bone;
                 Transform2D boneTransform = new(bone.ScaleX, bone.RotateSkew1, bone.RotateSkew0, bone.ScaleY, bone.X, bone.Y);
 
-                IColorSwap[]? colorSwaps = FilterColorSwaps(instance, gfx.ColorSwaps);
-                if (colorSwaps is null)
-                    return null;
-
-                result.Add(new BoneSpriteWithName()
+                BoneSpriteWithName boneSprite = new()
                 {
                     SwfFilePath = boneSwfPath,
                     SpriteName = instance.SpriteName,
@@ -74,9 +70,13 @@ public sealed class AnimationBuilder(ILoader loader)
                     AnimScale = gfx.AnimScale,
                     Transform = transform * boneTransform,
                     Tint = gfx.Tint,
-                    ColorSwaps = colorSwaps,
                     Opacity = bone.Opacity,
-                });
+                };
+
+                if (!BuildColorMap(boneSprite, instance, gfx.ColorSwaps))
+                    return null;
+
+                result.Add(boneSprite);
             }
             return [.. result];
         }
@@ -91,10 +91,7 @@ public sealed class AnimationBuilder(ILoader loader)
                 Bone = null!,
                 Visible = true,
             };
-            IColorSwap[]? colorSwaps = FilterColorSwaps(fakeInstance, gfx.ColorSwaps);
-            if (colorSwaps is null) return null;
-
-            BoneSprite sprite = new BoneSpriteWithName()
+            BoneSpriteWithName boneSprite = new()
             {
                 SwfFilePath = animFile,
                 SpriteName = gfx.AnimClass,
@@ -102,7 +99,18 @@ public sealed class AnimationBuilder(ILoader loader)
                 AnimScale = gfx.AnimScale,
                 Transform = transform,
                 Tint = gfx.Tint,
-                ColorSwaps = colorSwaps,
+                Opacity = 1,
+            };
+            if (!BuildColorMap(boneSprite, fakeInstance, gfx.ColorSwaps)) return null;
+
+            BoneSpriteWithName sprite = new()
+            {
+                SwfFilePath = animFile,
+                SpriteName = gfx.AnimClass,
+                Frame = frame,
+                AnimScale = gfx.AnimScale,
+                Transform = transform,
+                Tint = gfx.Tint,
                 Opacity = 1,
             };
             return [sprite];
@@ -242,7 +250,7 @@ public sealed class AnimationBuilder(ILoader loader)
         return true;
     }
 
-    private static void SetAsymBonesVisibility(IReadOnlyList<BoneInstance> bones, IGfxType gfx, bool spriteMirrored, bool isTooltip = false)
+    private static void SetAsymBonesVisibility(List<BoneInstance> bones, IGfxType gfx, bool spriteMirrored, bool isTooltip = false)
     {
         bool useRightTorso = gfx.UseRightTorso;
         bool useTrueLeftRightTorso = gfx.UseTrueLeftRightTorso;
@@ -378,33 +386,44 @@ public sealed class AnimationBuilder(ILoader loader)
         }
     }
 
-    private IColorSwap[]? FilterColorSwaps(BoneInstance instance, IEnumerable<IColorSwap> colorSwaps)
+    private bool BuildColorMap(BoneSpriteWithName sprite, BoneInstance instance, IEnumerable<IColorSwap> colorSwaps)
     {
         ArtTypeEnum artType = BoneDatabase.ArtTypeDict.GetValueOrDefault(instance.OgBoneName, ArtTypeEnum.None);
-        IEnumerable<IColorSwap> matchingColorSwaps = colorSwaps.Where((cs) =>
+
+        List<IColorSwap> matchingColorSwaps = [];
+        foreach (IColorSwap colorSwap in colorSwaps)
         {
-            return cs.ArtType == ArtTypeEnum.None || cs.ArtType == artType;
-        });
+            if (colorSwap.ArtType == ArtTypeEnum.None || colorSwap.ArtType == artType)
+            {
+                matchingColorSwaps.Add(colorSwap);
+            }
+        }
 
         // no swaps left
-        if (!matchingColorSwaps.Any()) return [];
+        if (matchingColorSwaps.Count == 0) return true;
 
         string boneSwfPath = GetRealSwfPath(instance.FilePath);
         // now get .a
         loader.LoadSwf(boneSwfPath);
         if (!loader.IsSwfLoaded(boneSwfPath))
-            return null;
+            return false;
+
         // no .a
         if (!loader.TryGetScriptAVar(boneSwfPath, instance.SpriteName, out uint[]? a))
-            return [];
+            return true;
 
         // filter to those that have a source in .a
         HashSet<uint> possibleSourceColors = new(a);
-        IColorSwap[] result = [.. matchingColorSwaps.Where((cs) => possibleSourceColors.Contains(cs.OldColor))];
 
-        // later color swaps have priority. reverse the array to give earlier color swaps priority.
-        Array.Reverse(result);
+        for (int i = matchingColorSwaps.Count - 1; i >= 0; --i)
+        {
+            IColorSwap colorSwap = matchingColorSwaps[i];
+            if (possibleSourceColors.Contains(colorSwap.OldColor))
+            {
+                sprite.ColorSwapDict[(colorSwap.ArtType, colorSwap.OldColor)] = colorSwap.NewColor;
+            }
+        }
 
-        return result;
+        return true;
     }
 }

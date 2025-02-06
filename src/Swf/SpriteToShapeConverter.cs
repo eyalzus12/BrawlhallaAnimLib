@@ -74,7 +74,7 @@ public sealed class SpriteToShapeConverter(ILoader loader)
                     AnimScale = boneSprite.AnimScale,
                     Transform = childTransform,
                     Tint = boneSprite.Tint,
-                    ColorSwaps = boneSprite.ColorSwaps,
+                    ColorSwapDict = boneSprite.ColorSwapDict,
                     Opacity = boneSprite.Opacity,
                 });
             }
@@ -89,7 +89,7 @@ public sealed class SpriteToShapeConverter(ILoader loader)
                     AnimScale = boneSprite.AnimScale,
                     Transform = childTransform,
                     Tint = boneSprite.Tint,
-                    ColorSwaps = boneSprite.ColorSwaps,
+                    ColorSwapDict = boneSprite.ColorSwapDict,
                     Opacity = boneSprite.Opacity,
                 };
                 BoneShape[]? shapes = ConvertToShapes(childSprite);
