@@ -48,12 +48,7 @@ public sealed class CostumeTypesGfxInfo
             HidePaperDollRightPistol = HidePaperDollRightPistol,
             CustomArtsInternal = [.. CustomArtsInternal],
             ColorSwapsInternal = [.. ColorSwapsInternal],
-            //BoneOverrideDelegate = gfxType.TryGetBoneOverride,
             BoneOverrides = new([.. BoneOverrides]), // clone
-            /*UseRightGauntlet = gfxType.UseRightGauntlet,
-            UseRightKatar = gfxType.UseRightKatar,
-            HideRightPistol2D = gfxType.HideRightPistol2D,
-            UseTrueLeftRightTorso = gfxType.UseTrueLeftRightTorso,*/
         };
 
         /*

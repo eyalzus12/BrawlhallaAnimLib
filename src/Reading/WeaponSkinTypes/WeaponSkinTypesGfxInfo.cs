@@ -24,14 +24,15 @@ public sealed class WeaponSkinTypesGfxInfo
 
     public IGfxType ToGfxType(IGfxType gfxType, IColorSchemeType? colorScheme = null, CostumeTypesGfxInfo? costumeType = null)
     {
+        // weapon skin types only modify the existing gfx
         InternalGfxImpl gfxResult = new()
         {
             AnimFile = gfxType.AnimFile,
             AnimClass = gfxType.AnimClass,
             AnimScale = gfxType.AnimScale,
             Tint = gfxType.Tint,
-            AsymmetrySwapFlags = AsymmetrySwapFlags,
-            /*UseRightTorso = gfxType.UseRightTorso,
+            AsymmetrySwapFlags = AsymmetrySwapFlags | gfxType.AsymmetrySwapFlags,
+            UseRightTorso = gfxType.UseRightTorso,
             UseRightJaw = gfxType.UseRightJaw,
             UseRightEyes = gfxType.UseRightEyes,
             UseRightMouth = gfxType.UseRightMouth,
@@ -41,14 +42,14 @@ public sealed class WeaponSkinTypesGfxInfo
             UseRightLeg1 = gfxType.UseRightLeg1,
             UseRightShin = gfxType.UseRightShin,
             UseTrueLeftRightHands = gfxType.UseTrueLeftRightHands,
-            HidePaperDollRightPistol = gfxType.HidePaperDollRightPistol,*/
-            CustomArtsInternal = [.. CustomArtsInternal],
-            ColorSwapsInternal = [.. ColorSwapsInternal],
-            //BoneOverrideDelegate = gfxType.TryGetBoneOverride,
+            HidePaperDollRightPistol = gfxType.HidePaperDollRightPistol,
+            CustomArtsInternal = [.. gfxType.CustomArts, .. CustomArtsInternal],
+            ColorSwapsInternal = [.. gfxType.ColorSwaps, .. ColorSwapsInternal],
+            BoneOverrideDelegate = gfxType.TryGetBoneOverride,
             UseRightGauntlet = UseRightGauntlet,
             UseRightKatar = UseRightKatar,
             HideRightPistol2D = HideRightPistol2D,
-            //UseTrueLeftRightTorso = gfxType.UseTrueLeftRightTorso,
+            UseTrueLeftRightTorso = gfxType.UseTrueLeftRightTorso,
         };
 
         ColorSchemeSwapEnum[] swapTypesList = Enum.GetValues<ColorSchemeSwapEnum>();
@@ -70,7 +71,6 @@ public sealed class WeaponSkinTypesGfxInfo
                 };
                 gfxResult.ColorSwapsInternal.Add(colorSwap);
             }
-
         }
 
         InternalColorSwapImpl? getColorSwap(ColorSchemeSwapEnum? swap, uint color, uint sourceColor)
@@ -180,11 +180,11 @@ public sealed class WeaponSkinTypesGfxInfo
     ];
 
     private static readonly (ColorSchemeSwapEnum swapType, uint source, uint fallbackTarget)[] KatarsLightsaberSwapTypes = [
-        (ColorSchemeSwapEnum.HandsLt, 5549035, 0),
-        (ColorSchemeSwapEnum.HandsSkinLt, 5549035, 16764057),
-        (ColorSchemeSwapEnum.HandsDk, 12582908, 0),
-        (ColorSchemeSwapEnum.HandsSkinDk, 12582908, 16749164),
-        (ColorSchemeSwapEnum.HandsSkinLt, 16764057, 0),
-        (ColorSchemeSwapEnum.HandsSkinDk, 16764057, 0),
+        (ColorSchemeSwapEnum.HandsLt, 0x54ABEB, 0),
+        (ColorSchemeSwapEnum.HandsSkinLt, 0x54ABEB, 0xFFCC99),
+        (ColorSchemeSwapEnum.HandsDk, 0xBFFFFC, 0),
+        (ColorSchemeSwapEnum.HandsSkinDk, 0xBFFFFC, 0xFF926C),
+        (ColorSchemeSwapEnum.HandsSkinLt, 0xFFCC99, 0),
+        (ColorSchemeSwapEnum.HandsSkinDk, 0xFFCC99, 0),
     ];
 }

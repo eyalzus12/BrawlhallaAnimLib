@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using BrawlhallaAnimLib.Bones;
 
 namespace BrawlhallaAnimLib.Gfx;
 
@@ -15,9 +14,9 @@ internal sealed class InternalGfxImpl : IGfxType
 
     public uint Tint { get; internal set; } = 0;
 
-    internal List<InternalCustomArtImpl> CustomArtsInternal { get; init; } = [];
+    internal List<ICustomArt> CustomArtsInternal { get; init; } = [];
     public IEnumerable<ICustomArt> CustomArts => CustomArtsInternal;
-    internal List<InternalColorSwapImpl> ColorSwapsInternal { get; init; } = [];
+    internal List<IColorSwap> ColorSwapsInternal { get; init; } = [];
     public IEnumerable<IColorSwap> ColorSwaps => ColorSwapsInternal;
 
     public bool UseRightTorso { get; internal set; } = false;
@@ -36,8 +35,7 @@ internal sealed class InternalGfxImpl : IGfxType
     public bool HideRightPistol2D { get; internal set; } = false;
     public bool UseTrueLeftRightTorso { get; internal set; } = false;
 
-    internal uint AsymmetrySwapFlags { get; set; } = 0;
-    public bool HasAsymmetrySwapFlag(BoneTypeEnum flag) => (AsymmetrySwapFlags & (1u << (int)flag)) != 0;
+    public uint AsymmetrySwapFlags { get; internal set; } = 0;
 
     internal TryGetBoneOverride? BoneOverrideDelegate { get; init; } = null;
     internal Dictionary<string, string> BoneOverrides { get; init; } = [];

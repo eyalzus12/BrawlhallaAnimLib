@@ -11,7 +11,8 @@ public interface IGfxType
     double AnimScale { get; }
     uint Tint { get; } // u24
 
-    bool HasAsymmetrySwapFlag(BoneTypeEnum flag);
+    uint AsymmetrySwapFlags { get; }
+    public bool HasAsymmetrySwapFlag(BoneTypeEnum boneType) => (AsymmetrySwapFlags & (1u << (int)boneType)) != 0;
 
     IEnumerable<ICustomArt> CustomArts { get; }
     IEnumerable<IColorSwap> ColorSwaps { get; }

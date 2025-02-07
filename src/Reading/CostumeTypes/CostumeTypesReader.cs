@@ -42,7 +42,7 @@ public static class CostumeTypesCsvReader
 
                 info.AsymmetrySwapFlags = asf;
             }
-            else if (key == "BoneOverride")
+            else if (key.StartsWith("BoneOverride"))
             {
                 string[] parts = value.Split(',');
                 info.BoneOverrides[parts[0]] = parts[1];
