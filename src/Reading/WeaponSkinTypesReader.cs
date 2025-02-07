@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using BrawlhallaAnimLib.Bones;
@@ -9,39 +8,27 @@ namespace BrawlhallaAnimLib.Reading;
 
 public static class WeaponSkinTypesReader
 {
-    public static WeaponSkinTypesGfxInfo GetGfxTypeInfo(ICsvRow row, ICsvReader costumeTypesReader, IColorSchemeType? colorScheme)
+    public static WeaponSkinTypesGfxInfo GetGfxTypeInfo(ICsvRow row, ICsvReader costumeTypesReader)
     {
-        WeaponSkinTypesGfxInfo gfx = new();
-
-        string? baseWeapon = null;
-
-        bool hasPickupCustomArt = false;
-        List<InternalCustomArtImpl>? customArts = null;
-
-        Dictionary<ColorSchemeSwapEnum, uint>? swapDefines = null;
-
-        ColorSchemeSwapEnum? AttackFxLt_Enum = null;
-        uint AttackFxLt_Color = 0;
-        ColorSchemeSwapEnum? AttackFxDk_Enum = null;
-        uint AttackFxDk_Color = 0;
+        WeaponSkinTypesGfxInfo info = new();
 
         foreach ((string key, string value) in row.ColEntries)
         {
             if (value == "BaseWeapon")
             {
-                baseWeapon = value;
+                info.BaseWeapon = value;
             }
             else if (value == "UseRightGauntlet")
             {
-                gfx.UseRightGauntlet = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                info.UseRightGauntlet = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
             }
             else if (value == "UseRightKatar")
             {
-                gfx.UseRightKatar = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                info.UseRightKatar = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
             }
             else if (value == "HideRightPistol2D")
             {
-                gfx.HideRightPistol2D = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                info.HideRightPistol2D = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
             }
             else if (key == "AsymmetrySwapFlags")
             {
@@ -52,7 +39,7 @@ public static class WeaponSkinTypesReader
                     return 0u;
                 }).Aggregate((a, v) => a | v);
 
-                gfx.BoneTypeFlags = asf;
+                info.AsymmetrySwapFlags = asf;
             }
             else if (key.StartsWith("CustomArt"))
             {
@@ -60,34 +47,32 @@ public static class WeaponSkinTypesReader
                 if (key.Contains("Pickup"))
                 {
                     defaultType = ArtTypeEnum.Pickup;
-                    hasPickupCustomArt = true;
+                    info.HasPickupCustomArt = true;
                 }
                 // the game also checks for Costume, but sets to ArtTypeEnum.Weapon instead of ArtTypeEnum.Costume
                 // is that a bug?
 
-                customArts ??= [];
-                customArts.Add(FromCustomArtCell(value, true, defaultType));
+                info.CustomArtsInternal.Add(FromCustomArtCell(value, true, defaultType));
             }
             else if (key.EndsWith("_Define"))
             {
                 string swap = key[..^"_Define".Length];
                 if (!Enum.TryParse(swap, true, out ColorSchemeSwapEnum swapType))
                     throw new ArgumentException($"Invalid swap {swap}");
-                swapDefines ??= [];
-                swapDefines[swapType] = uint.Parse(value, CultureInfo.InvariantCulture);
+                info.SwapDefines[swapType] = uint.Parse(value, CultureInfo.InvariantCulture);
             }
             else if (key == "AttackFxLt_Swap")
             {
                 if (value.StartsWith("0x"))
                 {
                     uint direct = Convert.ToUInt32(value, 16);
-                    AttackFxLt_Color = direct;
+                    info.AttackFxLt_Color = direct;
                 }
                 else
                 {
                     if (!Enum.TryParse(value, true, out ColorSchemeSwapEnum target))
                         throw new ArgumentException($"Invalid swap {value}");
-                    AttackFxLt_Enum = target;
+                    info.AttackFxLt_Enum = target;
                 }
             }
             else if (key == "AttackFxDk_Swap")
@@ -95,13 +80,13 @@ public static class WeaponSkinTypesReader
                 if (value.StartsWith("0x"))
                 {
                     uint direct = Convert.ToUInt32(value, 16);
-                    AttackFxDk_Color = direct;
+                    info.AttackFxDk_Color = direct;
                 }
                 else
                 {
                     if (!Enum.TryParse(value, true, out ColorSchemeSwapEnum target))
                         throw new ArgumentException($"Invalid swap {value}");
-                    AttackFxDk_Enum = target;
+                    info.AttackFxDk_Enum = target;
                 }
             }
             // stupid bullshit
@@ -116,8 +101,7 @@ public static class WeaponSkinTypesReader
                         string swap = key[..^"_Define".Length];
                         if (!Enum.TryParse(swap, true, out ColorSchemeSwapEnum swapType))
                             throw new ArgumentException($"Invalid swap {swap}");
-                        swapDefines ??= [];
-                        swapDefines.TryAdd(swapType, uint.Parse(value2, CultureInfo.InvariantCulture));
+                        info.SwapDefines.TryAdd(swapType, uint.Parse(value2, CultureInfo.InvariantCulture));
                     }
                 }
             }
@@ -130,88 +114,7 @@ public static class WeaponSkinTypesReader
             */
         }
 
-        ColorSchemeSwapEnum[] swapTypesList = Enum.GetValues<ColorSchemeSwapEnum>();
-        if (colorScheme is not null)
-        {
-            foreach (ColorSchemeSwapEnum swapType in swapTypesList)
-            {
-                // TODO: color exception
-
-                uint sourceColor = swapDefines?.GetValueOrDefault(swapType, 0u) ?? 0;
-                if (sourceColor == 0) continue;
-                uint targetColor = colorScheme.GetSwap(swapType);
-                if (targetColor == 0) continue;
-                InternalColorSwapImpl colorSwap = new()
-                {
-                    ArtType = ArtTypeEnum.Weapon,
-                    OldColor = sourceColor,
-                    NewColor = targetColor,
-                };
-                gfx.ColorSwapsInternal.Add(colorSwap);
-            }
-
-        }
-
-        InternalColorSwapImpl? getColorSwap(ColorSchemeSwapEnum? @enum, uint color, uint sourceColor)
-        {
-            if (@enum is not null)
-            {
-                ColorSchemeSwapEnum swapType = @enum.Value;
-                uint targetColor = colorScheme?.GetSwap(swapType) ?? 0;
-                if (targetColor == 0)
-                {
-                    uint definedColor = swapDefines?.GetValueOrDefault(swapType, 0u) ?? 0;
-                    targetColor = definedColor;
-                }
-                return new()
-                {
-                    ArtType = ArtTypeEnum.Weapon,
-                    OldColor = sourceColor,
-                    NewColor = targetColor,
-                };
-            }
-            else if (color != 0)
-            {
-                return new()
-                {
-                    ArtType = ArtTypeEnum.Weapon,
-                    OldColor = sourceColor,
-                    NewColor = color,
-                };
-            }
-            return null;
-        }
-
-        InternalColorSwapImpl? AttackFxLt = getColorSwap(AttackFxLt_Enum, AttackFxLt_Color, 0x14D3FF);
-        if (AttackFxLt is not null) gfx.ColorSwapsInternal.Add(AttackFxLt);
-        InternalColorSwapImpl? AttackFxDk = getColorSwap(AttackFxDk_Enum, AttackFxDk_Color, 0x004DCC);
-        if (AttackFxDk is not null) gfx.ColorSwapsInternal.Add(AttackFxDk);
-
-        if (hasPickupCustomArt)
-        {
-            foreach ((ColorSchemeSwapEnum a, ColorSchemeSwapEnum b) in PickupColorSwapTypes)
-            {
-                uint source = swapDefines?.GetValueOrDefault(a, 0u) ?? 0;
-                uint target = colorScheme?.GetSwap(b) ?? 0;
-                InternalColorSwapImpl colorSwap = new()
-                {
-                    ArtType = ArtTypeEnum.Pickup,
-                    OldColor = source,
-                    NewColor = target,
-                };
-                gfx.ColorSwapsInternal.Add(colorSwap);
-            }
-        }
-
-        // there's some extra bs here regarding lightsabers
-        // it depends on the costume type used with the weapon skin
-        // hell
-        /*if(baseWeapon == "Katar" && swapDefines is not null)
-        {
-            // ...
-        }*/
-
-        return gfx;
+        return info;
     }
 
     private static InternalCustomArtImpl FromCustomArtCell(string value, bool grabType, ArtTypeEnum defaultType)
@@ -235,12 +138,4 @@ public static class WeaponSkinTypesReader
             Name = name,
         };
     }
-
-    private static readonly (ColorSchemeSwapEnum, ColorSchemeSwapEnum)[] PickupColorSwapTypes = [
-        (ColorSchemeSwapEnum.SpecialAcc, ColorSchemeSwapEnum.SpecialAcc),
-        (ColorSchemeSwapEnum.SpecialDk, ColorSchemeSwapEnum.SpecialDk),
-        (ColorSchemeSwapEnum.SpecialLt, ColorSchemeSwapEnum.SpecialLt),
-        (ColorSchemeSwapEnum.Special, ColorSchemeSwapEnum.SpecialDk),
-        (ColorSchemeSwapEnum.SpecialVL, ColorSchemeSwapEnum.SpecialLt),
-    ];
 }
