@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using BrawlhallaAnimLib.Gfx;
 
-namespace BrawlhallaAnimLib.Reading;
+namespace BrawlhallaAnimLib.Reading.CostumeTypes;
 
 public sealed class CostumeTypesGfxInfo
 {

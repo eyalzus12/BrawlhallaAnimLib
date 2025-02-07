@@ -5,7 +5,7 @@ using System.Linq;
 using BrawlhallaAnimLib.Bones;
 using BrawlhallaAnimLib.Gfx;
 
-namespace BrawlhallaAnimLib.Reading;
+namespace BrawlhallaAnimLib.Reading.CostumeTypes;
 
 public static class CostumeTypesCsvReader
 {
