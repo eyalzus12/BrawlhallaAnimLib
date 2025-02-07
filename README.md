@@ -6,6 +6,10 @@ Still unsupported:
 * Swf color transforms
 * Extracting gfx types from:
   * ~~Costume types~~
-  * Weapon skin types
+  * ~~Weapon skin types~~
   * Spawn bot types
+  * Power types
+  * Companion types
+  * Trail effect types
+* Color exceptions
 * Testing
