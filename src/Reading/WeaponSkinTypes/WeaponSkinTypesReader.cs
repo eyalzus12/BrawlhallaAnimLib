@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.Linq;
 using BrawlhallaAnimLib.Bones;
 using BrawlhallaAnimLib.Gfx;
@@ -61,7 +60,7 @@ public static class WeaponSkinTypesReader
                 string swap = key[..^"_Define".Length];
                 if (!Enum.TryParse(swap, true, out ColorSchemeSwapEnum swapType))
                     throw new ArgumentException($"Invalid swap {swap}");
-                info.SwapDefines[swapType] = uint.Parse(value, CultureInfo.InvariantCulture);
+                info.SwapDefines[swapType] = Convert.ToUInt32(value, 16);
             }
             else if (key == "AttackFxLt_Swap")
             {
@@ -103,7 +102,7 @@ public static class WeaponSkinTypesReader
                         string swap = key[..^"_Define".Length];
                         if (!Enum.TryParse(swap, true, out ColorSchemeSwapEnum swapType))
                             throw new ArgumentException($"Invalid swap {swap}");
-                        info.SwapDefines.TryAdd(swapType, uint.Parse(value2, CultureInfo.InvariantCulture));
+                        info.SwapDefines.TryAdd(swapType, Convert.ToUInt32(value2, 16));
                     }
                 }
             }

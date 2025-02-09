@@ -83,7 +83,7 @@ public sealed class AnimationBuilder(ILoader loader)
         // swf animation
         else
         {
-            string swfFile = GetRealSwfPath(gfx.AnimFile);
+            string swfFile = gfx.AnimFile;
             BoneInstance fakeInstance = new()
             {
                 FilePath = swfFile,
