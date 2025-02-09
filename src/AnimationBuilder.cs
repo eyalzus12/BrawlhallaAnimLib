@@ -34,15 +34,11 @@ public sealed class AnimationBuilder(ILoader loader)
         // anm animation
         if (IsAnmAnimation(gfx.AnimFile))
         {
-            // TODO: figure out how to do this correctly
-            // the game just loads all anms ahead of time
-            string animFile = $"anims/{gfx.AnimFile[..^3]}anm";
-            loader.LoadAnm(animFile);
-            if (!loader.IsAnmLoaded(animFile))
-                return null;
-
             if (!loader.TryGetAnmClass($"{gfx.AnimFile}/{gfx.AnimClass}", out IAnmClass? anmClass))
-                throw new ArgumentException($"Could not find anim class {gfx.AnimClass} in {animFile}");
+            {
+                return null;
+                //throw new ArgumentException($"Could not find anim class {gfx.AnimClass} in {gfx.AnimFile}. Make sure you loaded it.");
+            }
             if (!anmClass.TryGetAnimation(animName, out IAnmAnimation? animation))
                 throw new ArgumentException($"No animation {animName} in anim class {gfx.AnimClass}");
             if (animation.Frames.Length == 0)

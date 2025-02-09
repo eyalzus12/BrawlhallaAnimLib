@@ -13,8 +13,6 @@ public interface ILoader
     bool TryGetTag(string swfPath, ushort tagId, [NotNullWhen(true)] out SwfTagBase? tag);
     bool TryGetScriptAVar(string swfPath, string spriteName, [NotNullWhen(true)] out uint[]? a);
     // anm
-    void LoadAnm(string anmPath);
-    bool IsAnmLoaded(string anmPath);
     bool TryGetAnmClass(string classIdentifier, [NotNullWhen(true)] out IAnmClass? anmClass);
     // bone types
     void LoadBoneTypes();

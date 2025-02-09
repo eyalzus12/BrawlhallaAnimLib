@@ -14,6 +14,8 @@ public static class WeaponSkinTypesReader
 
         foreach ((string key, string value) in row.ColEntries)
         {
+            if (value == "") continue;
+
             if (value == "BaseWeapon")
             {
                 info.BaseWeapon = value;
