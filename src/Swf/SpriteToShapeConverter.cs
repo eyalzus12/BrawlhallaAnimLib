@@ -20,8 +20,12 @@ public sealed class SpriteToShapeConverter(ILoader loader)
             loader.LoadSwf(swfPath);
             if (!loader.IsSwfLoaded(swfPath))
                 return null;
+
             if (!loader.TryGetSymbolId(swfPath, spriteName, out spriteId))
-                throw new ArgumentException($"Sprite {spriteName} not found in {swfPath}");
+            {
+                return [];
+                //throw new ArgumentException($"Sprite {spriteName} not found in {swfPath}");
+            }
         }
         else if (boneSprite is BoneSpriteWithId boneSpriteWithId)
         {
@@ -34,7 +38,11 @@ public sealed class SpriteToShapeConverter(ILoader loader)
         }
 
         if (!loader.TryGetTag(swfPath, spriteId, out SwfTagBase? tag))
-            throw new ArgumentException($"Tag id {spriteId} for sprite {spriteName} not found in {swfPath}");
+        {
+            return [];
+            //throw new ArgumentException($"Tag id {spriteId} for sprite {spriteName} not found in {swfPath}");
+        }
+
         if (tag is not DefineSpriteTag spriteTag)
             throw new ArgumentException($"Tag id {spriteId} for sprite {spriteName} leads to a non-sprite tag in {swfPath}");
 
@@ -55,22 +63,13 @@ public sealed class SpriteToShapeConverter(ILoader loader)
             Transform2D layerTransform = MathUtils.SwfMatrixToTransform(layer.Matrix);
             Transform2D childTransform = boneSprite.Transform * layerTransform;
 
-            ushort? shapeId = layerTag switch
-            {
-                DefineShapeTag shapeTag => shapeTag.ShapeID,
-                DefineShape2Tag shape2Tag => shape2Tag.ShapeID,
-                DefineShape3Tag shape3Tag => shape3Tag.ShapeID,
-                DefineShape4Tag shape4Tag => shape4Tag.ShapeID,
-                _ => null,
-            };
-
             // is a shape
-            if (shapeId is not null)
+            if (layerTag is ShapeBaseTag shapeTag)
             {
                 result.Add(new()
                 {
                     SwfFilePath = boneSprite.SwfFilePath,
-                    ShapeId = shapeId.Value,
+                    ShapeId = shapeTag.ShapeID,
                     AnimScale = boneSprite.AnimScale,
                     Transform = childTransform,
                     Tint = boneSprite.Tint,

@@ -120,11 +120,11 @@ public static class CostumeTypesCsvReader
                 string swap = key[..^"_Define".Length];
                 if (!Enum.TryParse(swap, true, out ColorSchemeSwapEnum swapType))
                     throw new ArgumentException($"Invalid swap {swap}");
-                info.SwapDefines[swapType] = uint.Parse(value, CultureInfo.InvariantCulture);
+                info.SwapDefines[swapType] = Convert.ToUInt32(value, 16);
             }
             else if (key.EndsWith("_Swap"))
             {
-                string swap = key[..^"_Define".Length];
+                string swap = key[..^"_Swap".Length];
                 if (!Enum.TryParse(swap, true, out ColorSchemeSwapEnum swapType))
                     throw new ArgumentException($"Invalid swap {swap}");
 
@@ -189,12 +189,12 @@ public static class CostumeTypesCsvReader
         string oldColorString = parts[0];
         if (oldColorString[0] != '0')
             throw new NotImplementedException($"Color swap color must start with 0");
-        uint oldColor = uint.Parse(oldColorString, CultureInfo.InvariantCulture);
+        uint oldColor = Convert.ToUInt32(oldColorString, 16);
 
         string newColorString = parts[1];
         if (newColorString[0] != '0')
             throw new NotImplementedException($"Color swap color must start with 0");
-        uint newColor = uint.Parse(newColorString, CultureInfo.InvariantCulture);
+        uint newColor = Convert.ToUInt32(newColorString, 16);
 
         return new()
         {

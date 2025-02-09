@@ -29,14 +29,18 @@ public sealed class AnimationBuilder(ILoader loader)
     // null if not loaded yet
     public BoneSpriteWithName[]? BuildAnim(IGfxType gfx, string animName, long frame, Transform2D transform, bool isTooltip = false)
     {
-        string animFile = GetRealSwfPath(gfx.AnimFile);
+        transform *= Transform2D.CreateScale(gfx.AnimScale, gfx.AnimScale);
 
         // anm animation
         if (IsAnmAnimation(gfx.AnimFile))
         {
+            // TODO: figure out how to do this correctly
+            // the game just loads all anms ahead of time
+            string animFile = $"anims/{gfx.AnimFile[..^3]}anm";
             loader.LoadAnm(animFile);
             if (!loader.IsAnmLoaded(animFile))
                 return null;
+
             if (!loader.TryGetAnmClass($"{gfx.AnimFile}/{gfx.AnimClass}", out IAnmClass? anmClass))
                 throw new ArgumentException($"Could not find anim class {gfx.AnimClass} in {animFile}");
             if (!anmClass.TryGetAnimation(animName, out IAnmAnimation? animation))
@@ -83,9 +87,10 @@ public sealed class AnimationBuilder(ILoader loader)
         // swf animation
         else
         {
+            string swfFile = GetRealSwfPath(gfx.AnimFile);
             BoneInstance fakeInstance = new()
             {
-                FilePath = animFile,
+                FilePath = swfFile,
                 OgBoneName = null!,
                 SpriteName = gfx.AnimClass,
                 Bone = null!,
@@ -93,7 +98,7 @@ public sealed class AnimationBuilder(ILoader loader)
             };
             BoneSpriteWithName boneSprite = new()
             {
-                SwfFilePath = animFile,
+                SwfFilePath = swfFile,
                 SpriteName = gfx.AnimClass,
                 Frame = frame,
                 AnimScale = gfx.AnimScale,
@@ -103,17 +108,7 @@ public sealed class AnimationBuilder(ILoader loader)
             };
             if (!BuildColorMap(boneSprite, fakeInstance, gfx.ColorSwaps)) return null;
 
-            BoneSpriteWithName sprite = new()
-            {
-                SwfFilePath = animFile,
-                SpriteName = gfx.AnimClass,
-                Frame = frame,
-                AnimScale = gfx.AnimScale,
-                Transform = transform,
-                Tint = gfx.Tint,
-                Opacity = 1,
-            };
-            return [sprite];
+            return [boneSprite];
         }
     }
 
@@ -413,7 +408,7 @@ public sealed class AnimationBuilder(ILoader loader)
             return true;
 
         // filter to those that have a source in .a
-        HashSet<uint> possibleSourceColors = new(a);
+        HashSet<uint> possibleSourceColors = [.. a];
 
         for (int i = matchingColorSwaps.Count - 1; i >= 0; --i)
         {
