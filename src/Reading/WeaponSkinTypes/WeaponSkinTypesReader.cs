@@ -97,9 +97,11 @@ public static class WeaponSkinTypesReader
                     throw new ArgumentException($"{value} from InheritCostumeDefines not found");
                 foreach ((string key2, string value2) in costumeType.ColEntries)
                 {
+                    if (value2 == "") continue;
+
                     if (key2.EndsWith("_Define"))
                     {
-                        string swap = key[..^"_Define".Length];
+                        string swap = key2[..^"_Define".Length];
                         if (!Enum.TryParse(swap, true, out ColorSchemeSwapEnum swapType))
                             throw new ArgumentException($"Invalid swap {swap}");
                         info.SwapDefines.TryAdd(swapType, Convert.ToUInt32(value2, 16));
