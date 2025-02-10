@@ -36,6 +36,14 @@ public enum ColorSchemeSwapEnum
     Weapon,
     WeaponDk,
     WeaponAcc,
+    // those are hardcoded for costume types. color swaps can't change those.
+    AttackFxLt,
+    AttackFxDk,
+    // those are hardcoded for weapon skin types. color swaps can't change those.
+    RHandsLt,
+    RHandsDk,
+    RHandsSkinLt,
+    RHandsSkinDk,
 }
 
 public interface IColorSchemeType

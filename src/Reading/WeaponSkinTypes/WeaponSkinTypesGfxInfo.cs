@@ -17,6 +17,7 @@ public sealed class WeaponSkinTypesGfxInfo
     internal bool HasPickupCustomArt { get; set; } = false;
     internal Dictionary<ColorSchemeSwapEnum, uint> SwapDefines { get; } = [];
     internal string? BaseWeapon { get; set; } = null;
+
     internal ColorSchemeSwapEnum? AttackFxLt_Enum { get; set; } = null;
     internal uint AttackFxLt_Color { get; set; } = 0;
     internal ColorSchemeSwapEnum? AttackFxDk_Enum { get; set; } = null;
