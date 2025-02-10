@@ -410,16 +410,24 @@ public sealed class AnimationBuilder(ILoader loader)
         if (!loader.TryGetScriptAVar(boneSwfPath, instance.SpriteName, out uint[]? a))
             return true;
 
+        HashSet<uint> oldColorsWithArt = [];
+
         // filter to those that have a source in .a
         HashSet<uint> possibleSourceColors = [.. a];
-
         for (int i = matchingColorSwaps.Count - 1; i >= 0; --i)
         {
             IColorSwap colorSwap = matchingColorSwaps[i];
-            if (possibleSourceColors.Contains(colorSwap.OldColor))
-            {
-                sprite.ColorSwapDict[(colorSwap.ArtType, colorSwap.OldColor)] = colorSwap.NewColor;
-            }
+            if (!possibleSourceColors.Contains(colorSwap.OldColor))
+                continue;
+
+            // color swaps with art type take priority over those without
+            if (colorSwap.ArtType == ArtTypeEnum.None && oldColorsWithArt.Contains(colorSwap.OldColor))
+                continue;
+
+            sprite.ColorSwapDict[colorSwap.OldColor] = colorSwap.NewColor;
+
+            if (colorSwap.ArtType != ArtTypeEnum.None)
+                oldColorsWithArt.Add(colorSwap.OldColor);
         }
 
         return true;
