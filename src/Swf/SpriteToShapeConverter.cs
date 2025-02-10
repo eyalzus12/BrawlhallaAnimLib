@@ -12,13 +12,13 @@ public sealed class SpriteToShapeConverter(ILoader loader)
     public BoneShape[]? ConvertToShapes(BoneSprite boneSprite)
     {
         string swfPath = boneSprite.SwfFilePath;
+
         ushort spriteId;
         string spriteName;
         if (boneSprite is BoneSpriteWithName boneSpriteWithName)
         {
             spriteName = boneSpriteWithName.SpriteName;
-            loader.LoadSwf(swfPath);
-            if (!loader.IsSwfLoaded(swfPath))
+            if (!loader.LoadSwf(swfPath))
                 return null;
 
             if (!loader.TryGetSymbolId(swfPath, spriteName, out spriteId))
@@ -68,7 +68,7 @@ public sealed class SpriteToShapeConverter(ILoader loader)
             {
                 result.Add(new()
                 {
-                    SwfFilePath = boneSprite.SwfFilePath,
+                    SwfFilePath = swfPath,
                     ShapeId = shapeTag.ShapeID,
                     AnimScale = boneSprite.AnimScale,
                     Transform = childTransform,
@@ -82,7 +82,7 @@ public sealed class SpriteToShapeConverter(ILoader loader)
                 ushort childSpriteId = childSpriteTag.SpriteID;
                 BoneSpriteWithId childSprite = new()
                 {
-                    SwfFilePath = boneSprite.SwfFilePath,
+                    SwfFilePath = swfPath,
                     SpriteId = childSpriteId,
                     Frame = boneSprite.Frame + layer.FrameOffset,
                     AnimScale = boneSprite.AnimScale,

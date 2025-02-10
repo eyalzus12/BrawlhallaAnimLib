@@ -7,15 +7,16 @@ namespace BrawlhallaAnimLib;
 public interface ILoader
 {
     // swf
-    void LoadSwf(string swfPath);
-    bool IsSwfLoaded(string swfPath);
+    bool SwfExists(string swfPath);
+    bool LoadSwf(string swfPath);
     bool TryGetSymbolId(string swfPath, string symbolName, out ushort symbolId);
-    bool TryGetTag(string swfPath, ushort tagId, [NotNullWhen(true)] out SwfTagBase? tag);
-    bool TryGetScriptAVar(string swfPath, string spriteName, [NotNullWhen(true)] out uint[]? a);
+    bool TryGetTag(string swfPath, ushort tagId, [MaybeNullWhen(false)] out SwfTagBase tag);
+    bool TryGetScriptAVar(string swfPath, string spriteName, [MaybeNullWhen(false)] out uint[] a);
     // anm
-    bool TryGetAnmClass(string classIdentifier, [NotNullWhen(true)] out IAnmClass? anmClass);
+    bool TryGetAnmClass(string classIdentifier, [MaybeNullWhen(false)] out IAnmClass anmClass);
     // bone types
-    void LoadBoneTypes();
-    bool IsBoneTypesLoaded();
-    bool TryGetBoneName(short boneId, [NotNullWhen(true)] out string? boneName);
+    bool LoadBoneTypes();
+    bool TryGetBoneName(short boneId, [MaybeNullWhen(false)] out string boneName);
+    bool LoadBoneSources();
+    bool TryGetBoneFilePath(string boneName, [MaybeNullWhen(false)] out string bonePath);
 }

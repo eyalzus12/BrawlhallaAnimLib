@@ -11,15 +11,6 @@ namespace BrawlhallaAnimLib;
 
 public sealed class AnimationBuilder(ILoader loader)
 {
-    // TODO: needs to be done using BoneSources.xml
-    // although there are no swf files where this temp mapping doesn't work
-    private static string GetRealSwfPath(string path)
-    {
-        if (path.StartsWith("Animation_"))
-            return $"bones/Bones_{path["Animation_".Length..]}";
-        return path;
-    }
-
     private static readonly string[] AnimationPrefixes = ["Animation_", "a_Animation_EB_", "a__LootBox", "a__PodiumRig"];
     private static bool IsAnmAnimation(string path)
     {
@@ -57,14 +48,12 @@ public sealed class AnimationBuilder(ILoader loader)
                 if (!instance.Visible)
                     continue;
 
-                string boneSwfPath = GetRealSwfPath(instance.FilePath);
-
                 IAnmBone bone = instance.Bone;
                 Transform2D boneTransform = new(bone.ScaleX, bone.RotateSkew1, bone.RotateSkew0, bone.ScaleY, bone.X, bone.Y);
 
                 BoneSpriteWithName boneSprite = new()
                 {
-                    SwfFilePath = boneSwfPath,
+                    SwfFilePath = instance.FilePath,
                     SpriteName = instance.SpriteName,
                     Frame = bone.Frame - 1,
                     AnimScale = gfx.AnimScale,
@@ -83,10 +72,9 @@ public sealed class AnimationBuilder(ILoader loader)
         // swf animation
         else
         {
-            string swfFile = gfx.AnimFile;
             BoneInstance fakeInstance = new()
             {
-                FilePath = swfFile,
+                FilePath = gfx.AnimFile,
                 OgBoneName = null!,
                 SpriteName = gfx.AnimClass,
                 Bone = null!,
@@ -94,7 +82,7 @@ public sealed class AnimationBuilder(ILoader loader)
             };
             BoneSpriteWithName boneSprite = new()
             {
-                SwfFilePath = swfFile,
+                SwfFilePath = gfx.AnimFile,
                 SpriteName = gfx.AnimClass,
                 Frame = frame,
                 AnimScale = gfx.AnimScale,
@@ -121,8 +109,7 @@ public sealed class AnimationBuilder(ILoader loader)
 
     private List<BoneInstance>? GetBoneInstances(IAnmBone[] bones, IGfxType gfx)
     {
-        loader.LoadBoneTypes();
-        if (!loader.IsBoneTypesLoaded())
+        if (!loader.LoadBoneTypes())
             return null;
 
         List<BoneInstance> instances = [];
@@ -203,10 +190,21 @@ public sealed class AnimationBuilder(ILoader loader)
                     _ => true,
                 }
             };
+
+            string trueSpriteName = finalBoneName + customArtSuffix;
+            string trueFilePath = customArt?.FileName ?? gfx.AnimFile;
+            if (!loader.LoadBoneSources())
+                return null;
+            if (loader.TryGetBoneFilePath(trueSpriteName, out string? boneSource))
+                trueFilePath = boneSource;
+
+            if (!loader.SwfExists(trueFilePath))
+                continue;
+
             instances.Add(new()
             {
-                FilePath = customArt?.FileName ?? gfx.AnimFile,
-                SpriteName = finalBoneName + customArtSuffix,
+                FilePath = trueFilePath,
+                SpriteName = trueSpriteName,
                 OgBoneName = boneName,
                 Bone = bone,
                 Visible = visible,
@@ -227,11 +225,20 @@ public sealed class AnimationBuilder(ILoader loader)
             bool artTypeMatches = artType == ArtTypeEnum.None || ca.Type == ArtTypeEnum.None || ca.Type == artType;
             if (rightMatches && artTypeMatches)
             {
-                string caPath = GetRealSwfPath(ca.FileName);
-                loader.LoadSwf(caPath);
-                if (!loader.IsSwfLoaded(caPath))
+                string truePath = ca.FileName;
+                string newBoneName = boneName + '_' + ca.Name;
+
+                if (!loader.LoadBoneSources())
                     return false;
-                if (loader.TryGetSymbolId(caPath, $"{boneName}_{ca.Name}", out _))
+                if (loader.TryGetBoneFilePath(newBoneName, out string? boneSource))
+                    truePath = boneSource;
+
+                if (!loader.SwfExists(truePath))
+                    continue;
+
+                if (!loader.LoadSwf(truePath))
+                    return false;
+                if (loader.TryGetSymbolId(truePath, newBoneName, out _))
                 {
                     chosen = ca;
                     return true;
@@ -393,10 +400,10 @@ public sealed class AnimationBuilder(ILoader loader)
         // no swaps left
         if (matchingColorSwaps.Count == 0) return true;
 
-        string boneSwfPath = GetRealSwfPath(instance.FilePath);
         // now get .a
-        loader.LoadSwf(boneSwfPath);
-        if (!loader.IsSwfLoaded(boneSwfPath))
+
+        string boneSwfPath = sprite.SwfFilePath;
+        if (!loader.LoadSwf(boneSwfPath))
             return false;
 
         // no .a
