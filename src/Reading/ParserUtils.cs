@@ -1,13 +1,15 @@
+using System;
 using System.Globalization;
 
 namespace BrawlhallaAnimLib.Reading;
 
-internal static class ParserUtils
+public static class ParserUtils
 {
     public static uint ParseHexString(string str)
     {
-        if (uint.TryParse(str, NumberStyles.HexNumber, null, out uint result))
-            return result;
-        return 0;
+        if (!str.StartsWith("0x") && !str.StartsWith("0X")) return 0;
+        if (!uint.TryParse(str.AsSpan()[2..], NumberStyles.HexNumber, null, out uint result)) return 0;
+
+        return result;
     }
 }

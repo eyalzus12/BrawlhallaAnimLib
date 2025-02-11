@@ -417,6 +417,7 @@ public sealed class AnimationBuilder(ILoader loader)
         for (int i = matchingColorSwaps.Count - 1; i >= 0; --i)
         {
             IColorSwap colorSwap = matchingColorSwaps[i];
+
             if (!possibleSourceColors.Contains(colorSwap.OldColor))
                 continue;
 
