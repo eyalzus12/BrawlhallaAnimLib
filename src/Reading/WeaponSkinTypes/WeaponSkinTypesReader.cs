@@ -60,13 +60,14 @@ public static class WeaponSkinTypesReader
                 string swap = key[..^"_Define".Length];
                 if (!Enum.TryParse(swap, true, out ColorSchemeSwapEnum swapType))
                     throw new ArgumentException($"Invalid swap {swap}");
-                info.SwapDefines[swapType] = Convert.ToUInt32(value, 16);
+                uint define = ParserUtils.ParseHexString(value);
+                info.SwapDefines[swapType] = define;
             }
             else if (key == "AttackFxLt_Swap")
             {
                 if (value.StartsWith("0x"))
                 {
-                    uint direct = Convert.ToUInt32(value, 16);
+                    uint direct = ParserUtils.ParseHexString(value);
                     info.AttackFxLt_Color = direct;
                 }
                 else
@@ -80,7 +81,7 @@ public static class WeaponSkinTypesReader
             {
                 if (value.StartsWith("0x"))
                 {
-                    uint direct = Convert.ToUInt32(value, 16);
+                    uint direct = ParserUtils.ParseHexString(value);
                     info.AttackFxDk_Color = direct;
                 }
                 else
@@ -104,7 +105,7 @@ public static class WeaponSkinTypesReader
                         string swap = key2[..^"_Define".Length];
                         if (!Enum.TryParse(swap, true, out ColorSchemeSwapEnum swapType))
                             throw new ArgumentException($"Invalid swap {swap}");
-                        info.SwapDefines.TryAdd(swapType, Convert.ToUInt32(value2, 16));
+                        info.SwapDefines.TryAdd(swapType, ParserUtils.ParseHexString(value2));
                     }
                 }
             }
@@ -130,6 +131,10 @@ public static class WeaponSkinTypesReader
 
         string rest = grabType ? value[(value.IndexOf(':') + 1)..] : value;
         string[] parts = rest.Split('/');
+
+        if (parts.Length < 2)
+            throw new ArgumentException($"Invalid CustomArt string {rest}");
+
         string fileName = parts[0];
         string name = parts[1];
 

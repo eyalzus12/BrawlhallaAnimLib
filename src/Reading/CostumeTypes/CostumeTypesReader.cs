@@ -119,7 +119,7 @@ public static class CostumeTypesCsvReader
                 string swap = key[..^"_Define".Length];
                 if (!Enum.TryParse(swap, true, out ColorSchemeSwapEnum swapType))
                     throw new ArgumentException($"Invalid swap {swap}");
-                info.SwapDefines[swapType] = Convert.ToUInt32(value, 16);
+                info.SwapDefines[swapType] = ParserUtils.ParseHexString(value);
             }
             else if (key.EndsWith("_Swap"))
             {
@@ -129,7 +129,7 @@ public static class CostumeTypesCsvReader
 
                 if (value.StartsWith("0x"))
                 {
-                    uint direct = Convert.ToUInt32(value, 16);
+                    uint direct = ParserUtils.ParseHexString(value);
                     info.DirectSwaps[swapType] = direct;
                 }
                 else
@@ -167,6 +167,10 @@ public static class CostumeTypesCsvReader
 
         string rest = grabType ? value[(value.IndexOf(':') + 1)..] : value;
         string[] parts = rest.Split('/');
+
+        if (parts.Length < 2)
+            throw new ArgumentException($"Invalid CustomArt string {rest}");
+
         string fileName = parts[0];
         string name = parts[1];
 
@@ -188,12 +192,12 @@ public static class CostumeTypesCsvReader
         string oldColorString = parts[0];
         if (oldColorString[0] != '0')
             throw new NotImplementedException($"Color swap color must start with 0");
-        uint oldColor = Convert.ToUInt32(oldColorString, 16);
+        uint oldColor = ParserUtils.ParseHexString(oldColorString);
 
         string newColorString = parts[1];
         if (newColorString[0] != '0')
             throw new NotImplementedException($"Color swap color must start with 0");
-        uint newColor = Convert.ToUInt32(newColorString, 16);
+        uint newColor = ParserUtils.ParseHexString(newColorString);
 
         return new()
         {
