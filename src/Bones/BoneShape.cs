@@ -6,6 +6,7 @@ namespace BrawlhallaAnimLib.Bones;
 public sealed class BoneShape
 {
     public required string SwfFilePath { get; init; }
+    public required string BoneName { get; init; }
     public required ushort ShapeId { get; init; }
 
     public required double AnimScale { get; init; }

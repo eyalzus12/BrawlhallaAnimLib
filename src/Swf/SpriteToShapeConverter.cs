@@ -69,6 +69,7 @@ public sealed class SpriteToShapeConverter(ILoader loader)
                 result.Add(new()
                 {
                     SwfFilePath = swfPath,
+                    BoneName = spriteName,
                     ShapeId = shapeTag.ShapeID,
                     AnimScale = boneSprite.AnimScale,
                     Transform = childTransform,
