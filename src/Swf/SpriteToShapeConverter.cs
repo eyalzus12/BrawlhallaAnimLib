@@ -9,7 +9,7 @@ namespace BrawlhallaAnimLib.Swf;
 
 public sealed class SpriteToShapeConverter(ILoader loader)
 {
-    public BoneShape[]? ConvertToShapes(BoneSprite boneSprite)
+    public BoneShape[]? ConvertToShapes(BoneSprite boneSprite, long frame)
     {
         string swfPath = boneSprite.SwfFilePath;
 
@@ -53,8 +53,8 @@ public sealed class SpriteToShapeConverter(ILoader loader)
 
         List<BoneShape> result = [];
 
-        int frame = (int)MathUtils.SafeMod(boneSprite.Frame, sprite.Frames.Length);
-        SwfSpriteFrame spriteFrame = sprite.Frames[frame];
+        long clampedFrame = MathUtils.SafeMod(frame, sprite.Frames.Length);
+        SwfSpriteFrame spriteFrame = sprite.Frames[clampedFrame];
         foreach ((ushort depth, SwfSpriteFrameLayer layer) in spriteFrame.Layers)
         {
             if (!loader.TryGetTag(swfPath, layer.CharacterId, out SwfTagBase? layerTag))
@@ -85,14 +85,13 @@ public sealed class SpriteToShapeConverter(ILoader loader)
                 {
                     SwfFilePath = swfPath,
                     SpriteId = childSpriteId,
-                    Frame = boneSprite.Frame + layer.FrameOffset,
                     AnimScale = boneSprite.AnimScale,
                     Transform = childTransform,
                     Tint = boneSprite.Tint,
                     ColorSwapDict = boneSprite.ColorSwapDict,
                     Opacity = boneSprite.Opacity,
                 };
-                BoneShape[]? shapes = ConvertToShapes(childSprite);
+                BoneShape[]? shapes = ConvertToShapes(childSprite, frame + layer.FrameOffset);
                 if (shapes is null) return null;
                 result.AddRange(shapes);
             }

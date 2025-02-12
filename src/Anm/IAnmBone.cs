@@ -10,5 +10,4 @@ public interface IAnmBone
     float X { get; }
     float Y { get; }
     double Opacity { get; }
-    short Frame { get; }
 }
