@@ -173,8 +173,6 @@ public sealed class CostumeTypesGfx
             CustomArtsInternal.Add(headCustomArt);
         CustomArtsInternal.Add(capeCustomArt ?? NoCapeCustomArt);
 
-        // TODO: color exceptions
-
         if (baseColorSwaps is not null)
             ColorSwapsInternal.AddRange(baseColorSwaps);
     }

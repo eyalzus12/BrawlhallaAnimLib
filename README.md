@@ -11,5 +11,4 @@ Still unsupported:
   * Power types
   * Companion types
   * Trail effect types
-* Color exceptions
 * Testing
