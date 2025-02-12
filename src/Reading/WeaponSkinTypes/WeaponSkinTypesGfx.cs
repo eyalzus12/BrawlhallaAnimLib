@@ -1,12 +1,31 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using BrawlhallaAnimLib.Bones;
 using BrawlhallaAnimLib.Gfx;
 using BrawlhallaAnimLib.Reading.CostumeTypes;
 
 namespace BrawlhallaAnimLib.Reading.WeaponSkinTypes;
 
-public sealed class WeaponSkinTypesGfxInfo
+public sealed class WeaponSkinTypesGfx
 {
+    private static readonly (ColorSchemeSwapEnum, ColorSchemeSwapEnum)[] PickupColorSwapTypes = [
+        (ColorSchemeSwapEnum.SpecialAcc, ColorSchemeSwapEnum.SpecialAcc),
+        (ColorSchemeSwapEnum.SpecialDk, ColorSchemeSwapEnum.SpecialDk),
+        (ColorSchemeSwapEnum.SpecialLt, ColorSchemeSwapEnum.SpecialLt),
+        (ColorSchemeSwapEnum.Special, ColorSchemeSwapEnum.SpecialDk),
+        (ColorSchemeSwapEnum.SpecialVL, ColorSchemeSwapEnum.SpecialLt),
+    ];
+
+    private static readonly (ColorSchemeSwapEnum swapType, uint source, uint fallbackTarget)[] KatarsLightsaberSwapTypes = [
+        (ColorSchemeSwapEnum.HandsLt, 0x54ABEB, 0),
+        (ColorSchemeSwapEnum.HandsSkinLt, 0x54ABEB, 0xFFCC99),
+        (ColorSchemeSwapEnum.HandsDk, 0xBFFFFC, 0),
+        (ColorSchemeSwapEnum.HandsSkinDk, 0xBFFFFC, 0xFF926C),
+        (ColorSchemeSwapEnum.HandsSkinLt, 0xFFCC99, 0),
+        (ColorSchemeSwapEnum.HandsSkinDk, 0xFFCC99, 0),
+    ];
+
     internal string WeaponSkinName { get; set; } = null!;
     internal uint AsymmetrySwapFlags { get; set; } = 0;
     internal bool UseRightGauntlet { get; set; }
@@ -24,7 +43,122 @@ public sealed class WeaponSkinTypesGfxInfo
     internal ColorSchemeSwapEnum? AttackFxDk_Enum { get; set; } = null;
     internal uint AttackFxDk_Color { get; set; } = 0;
 
-    public IGfxType ToGfxType(IGfxType gfxType, IColorSchemeType? colorScheme = null, IColorExceptionTypes? colorExceptions = null, CostumeTypesGfxInfo? costumeType = null)
+
+    public WeaponSkinTypesGfx(ICsvRow row, ICsvReader costumeTypesReader)
+    {
+        foreach ((string key, string value) in row.ColEntries)
+        {
+            if (value == "") continue;
+
+            if (key == "WeaponSkinName")
+            {
+                WeaponSkinName = value;
+            }
+            else if (key == "BaseWeapon")
+            {
+                BaseWeapon = value;
+            }
+            else if (key == "UseRightGauntlet")
+            {
+                UseRightGauntlet = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+            }
+            else if (key == "UseRightKatar")
+            {
+                UseRightKatar = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+            }
+            else if (key == "HideRightPistol2D")
+            {
+                HideRightPistol2D = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+            }
+            else if (key == "AsymmetrySwapFlags")
+            {
+                uint asf = value.Split(",").Select(static (flag) =>
+                {
+                    if (Enum.TryParse(flag, out BoneTypeEnum result))
+                        return 1u << (int)result;
+                    return 0u;
+                }).Aggregate((a, v) => a | v);
+
+                AsymmetrySwapFlags = asf;
+            }
+            else if (key.StartsWith("CustomArt"))
+            {
+                ArtTypeEnum defaultType = ArtTypeEnum.Weapon;
+                if (key.Contains("Pickup"))
+                {
+                    defaultType = ArtTypeEnum.Pickup;
+                    HasPickupCustomArt = true;
+                }
+                // the game also checks for Costume, but sets to ArtTypeEnum.Weapon instead of ArtTypeEnum.Costume
+                // is that a bug?
+
+                CustomArtsInternal.Add(FromCustomArtCell(value, true, defaultType));
+            }
+            else if (key.EndsWith("_Define"))
+            {
+                string swap = key[..^"_Define".Length];
+                if (!Enum.TryParse(swap, true, out ColorSchemeSwapEnum swapType))
+                    throw new ArgumentException($"Invalid swap {swap}");
+                uint define = ParserUtils.ParseHexString(value);
+                SwapDefines[swapType] = define;
+            }
+            else if (key == "AttackFxLt_Swap")
+            {
+                if (value.StartsWith("0x"))
+                {
+                    uint direct = ParserUtils.ParseHexString(value);
+                    AttackFxLt_Color = direct;
+                }
+                else
+                {
+                    if (!Enum.TryParse(value, true, out ColorSchemeSwapEnum target))
+                        throw new ArgumentException($"Invalid swap {value}");
+                    AttackFxLt_Enum = target;
+                }
+            }
+            else if (key == "AttackFxDk_Swap")
+            {
+                if (value.StartsWith("0x"))
+                {
+                    uint direct = ParserUtils.ParseHexString(value);
+                    AttackFxDk_Color = direct;
+                }
+                else
+                {
+                    if (!Enum.TryParse(value, true, out ColorSchemeSwapEnum target))
+                        throw new ArgumentException($"Invalid swap {value}");
+                    AttackFxDk_Enum = target;
+                }
+            }
+            // stupid bullshit
+            else if (key == "InheritCostumeDefines")
+            {
+                if (!costumeTypesReader.TryGetCol(value, out ICsvRow? costumeType))
+                    throw new ArgumentException($"{value} from InheritCostumeDefines not found");
+                foreach ((string key2, string value2) in costumeType.ColEntries)
+                {
+                    if (value2 == "") continue;
+
+                    if (key2.EndsWith("_Define"))
+                    {
+                        string swap = key2[..^"_Define".Length];
+                        if (!Enum.TryParse(swap, true, out ColorSchemeSwapEnum swapType))
+                            throw new ArgumentException($"Invalid swap {swap}");
+                        SwapDefines.TryAdd(swapType, ParserUtils.ParseHexString(value2));
+                    }
+                }
+            }
+            /*
+            There are also these properties:
+            CostumeOverrides - used by dhalsim
+            OverrideCustomArt - used by dhalsim
+            AttackGfxOverrideSource - used by lightsabers
+            AttackGfxOverride.* - used by lightsabers
+            */
+        }
+    }
+
+    public IGfxType ToGfxType(IGfxType gfxType, IColorSchemeType? colorScheme = null, IColorExceptionTypes? colorExceptions = null, CostumeTypesGfx? costumeType = null)
     {
         // weapon skin types only modify the existing gfx
         InternalGfxImpl gfxResult = new()
@@ -183,20 +317,29 @@ public sealed class WeaponSkinTypesGfxInfo
         return gfxResult;
     }
 
-    private static readonly (ColorSchemeSwapEnum, ColorSchemeSwapEnum)[] PickupColorSwapTypes = [
-        (ColorSchemeSwapEnum.SpecialAcc, ColorSchemeSwapEnum.SpecialAcc),
-        (ColorSchemeSwapEnum.SpecialDk, ColorSchemeSwapEnum.SpecialDk),
-        (ColorSchemeSwapEnum.SpecialLt, ColorSchemeSwapEnum.SpecialLt),
-        (ColorSchemeSwapEnum.Special, ColorSchemeSwapEnum.SpecialDk),
-        (ColorSchemeSwapEnum.SpecialVL, ColorSchemeSwapEnum.SpecialLt),
-    ];
+    private static InternalCustomArtImpl FromCustomArtCell(string value, bool grabType, ArtTypeEnum defaultType)
+    {
+        bool right = grabType && value.StartsWith("RIGHT:");
 
-    private static readonly (ColorSchemeSwapEnum swapType, uint source, uint fallbackTarget)[] KatarsLightsaberSwapTypes = [
-        (ColorSchemeSwapEnum.HandsLt, 0x54ABEB, 0),
-        (ColorSchemeSwapEnum.HandsSkinLt, 0x54ABEB, 0xFFCC99),
-        (ColorSchemeSwapEnum.HandsDk, 0xBFFFFC, 0),
-        (ColorSchemeSwapEnum.HandsSkinDk, 0xBFFFFC, 0xFF926C),
-        (ColorSchemeSwapEnum.HandsSkinLt, 0xFFCC99, 0),
-        (ColorSchemeSwapEnum.HandsSkinDk, 0xFFCC99, 0),
-    ];
+        ArtTypeEnum type = defaultType;
+        if (value.StartsWith("C:")) type = ArtTypeEnum.Costume;
+        else if (value.StartsWith("W:")) type = ArtTypeEnum.Weapon;
+
+        string rest = grabType ? value[(value.IndexOf(':') + 1)..] : value;
+        string[] parts = rest.Split('/');
+
+        if (parts.Length < 2)
+            throw new ArgumentException($"Invalid CustomArt string {rest}");
+
+        string fileName = parts[0];
+        string name = parts[1];
+
+        return new()
+        {
+            Right = right,
+            Type = type,
+            FileName = fileName,
+            Name = name,
+        };
+    }
 }
