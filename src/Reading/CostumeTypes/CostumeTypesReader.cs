@@ -30,7 +30,11 @@ public static class CostumeTypesCsvReader
         {
             if (value == "") continue;
 
-            if (key == "GfxType.AsymmetrySwapFlags")
+            if (key == "CostumeName")
+            {
+                info.CostumeName = value;
+            }
+            else if (key == "GfxType.AsymmetrySwapFlags")
             {
                 uint asf = value.Split(",").Select(static (flag) =>
                 {

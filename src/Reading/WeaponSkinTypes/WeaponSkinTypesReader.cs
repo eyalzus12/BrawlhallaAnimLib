@@ -15,19 +15,23 @@ public static class WeaponSkinTypesReader
         {
             if (value == "") continue;
 
-            if (value == "BaseWeapon")
+            if (key == "WeaponSkinName")
+            {
+                info.WeaponSkinName = value;
+            }
+            else if (key == "BaseWeapon")
             {
                 info.BaseWeapon = value;
             }
-            else if (value == "UseRightGauntlet")
+            else if (key == "UseRightGauntlet")
             {
                 info.UseRightGauntlet = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
             }
-            else if (value == "UseRightKatar")
+            else if (key == "UseRightKatar")
             {
                 info.UseRightKatar = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
             }
-            else if (value == "HideRightPistol2D")
+            else if (key == "HideRightPistol2D")
             {
                 info.HideRightPistol2D = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
             }

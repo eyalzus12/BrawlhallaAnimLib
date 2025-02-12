@@ -48,5 +48,6 @@ public enum ColorSchemeSwapEnum
 
 public interface IColorSchemeType
 {
+    string Name { get; }
     uint GetSwap(ColorSchemeSwapEnum swapType);
 }

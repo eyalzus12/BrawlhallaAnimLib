@@ -6,6 +6,7 @@ namespace BrawlhallaAnimLib.Reading.CostumeTypes;
 
 public sealed class CostumeTypesGfxInfo
 {
+    internal string CostumeName { get; set; } = null!;
     internal uint AsymmetrySwapFlags { get; set; } = 0;
     internal bool UseRightTorso { get; set; }
     internal bool UseRightJaw { get; set; }
@@ -26,7 +27,7 @@ public sealed class CostumeTypesGfxInfo
     internal Dictionary<ColorSchemeSwapEnum, ColorSchemeSwapEnum> IndirectSwaps { get; } = [];
     internal Dictionary<ColorSchemeSwapEnum, uint> DirectSwaps { get; } = [];
 
-    public IGfxType ToGfxType(IGfxType gfxType, IColorSchemeType? colorScheme = null)
+    public IGfxType ToGfxType(IGfxType gfxType, IColorSchemeType? colorScheme = null, IColorExceptionTypes? colorExceptions = null)
     {
         InternalGfxImpl gfxResult = new()
         {
@@ -59,12 +60,24 @@ public sealed class CostumeTypesGfxInfo
         ColorSchemeSwapEnum[] swapTypesList = Enum.GetValues<ColorSchemeSwapEnum>();
         if (colorScheme is not null)
         {
+            IColorExceptionType? colorException = null;
+            colorExceptions?.TryGetColorException(
+                CostumeName, colorScheme.Name, ColorExceptionMode.Costume,
+                out colorException
+            );
+
             // color scheme
             foreach (ColorSchemeSwapEnum swapType in swapTypesList)
             {
+                ColorSchemeSwapEnum targetSwapType = swapType;
+                if (colorException?.TryGetSwapRedirect(swapType, out ColorSchemeSwapEnum newSwapType) ?? false)
+                {
+                    targetSwapType = newSwapType;
+                }
+
                 uint sourceColor = SwapDefines.GetValueOrDefault(swapType, 0u);
                 if (sourceColor == 0) continue;
-                uint targetColor = colorScheme.GetSwap(swapType);
+                uint targetColor = colorScheme.GetSwap(targetSwapType);
                 if (targetColor == 0) continue;
                 InternalColorSwapImpl colorSwap = new()
                 {

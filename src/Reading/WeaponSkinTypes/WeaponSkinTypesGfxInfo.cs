@@ -7,6 +7,7 @@ namespace BrawlhallaAnimLib.Reading.WeaponSkinTypes;
 
 public sealed class WeaponSkinTypesGfxInfo
 {
+    internal string WeaponSkinName { get; set; } = null!;
     internal uint AsymmetrySwapFlags { get; set; } = 0;
     internal bool UseRightGauntlet { get; set; }
     internal bool UseRightKatar { get; set; }
@@ -23,7 +24,7 @@ public sealed class WeaponSkinTypesGfxInfo
     internal ColorSchemeSwapEnum? AttackFxDk_Enum { get; set; } = null;
     internal uint AttackFxDk_Color { get; set; } = 0;
 
-    public IGfxType ToGfxType(IGfxType gfxType, IColorSchemeType? colorScheme = null, CostumeTypesGfxInfo? costumeType = null)
+    public IGfxType ToGfxType(IGfxType gfxType, IColorSchemeType? colorScheme = null, IColorExceptionTypes? colorExceptions = null, CostumeTypesGfxInfo? costumeType = null)
     {
         // weapon skin types only modify the existing gfx
         InternalGfxImpl gfxResult = new()
@@ -56,13 +57,23 @@ public sealed class WeaponSkinTypesGfxInfo
         ColorSchemeSwapEnum[] swapTypesList = Enum.GetValues<ColorSchemeSwapEnum>();
         if (colorScheme is not null)
         {
+            IColorExceptionType? colorException = null;
+            colorExceptions?.TryGetColorException(
+                WeaponSkinName, colorScheme.Name, ColorExceptionMode.Weapon,
+                out colorException
+            );
+
             foreach (ColorSchemeSwapEnum swapType in swapTypesList)
             {
-                // TODO: color exception
+                ColorSchemeSwapEnum targetSwapType = swapType;
+                if (colorException?.TryGetSwapRedirect(swapType, out ColorSchemeSwapEnum newSwapType) ?? false)
+                {
+                    targetSwapType = newSwapType;
+                }
 
                 uint sourceColor = SwapDefines.GetValueOrDefault(swapType, 0u);
                 if (sourceColor == 0) continue;
-                uint targetColor = colorScheme.GetSwap(swapType);
+                uint targetColor = colorScheme.GetSwap(targetSwapType);
                 if (targetColor == 0) continue;
                 InternalColorSwapImpl colorSwap = new()
                 {
