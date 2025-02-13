@@ -561,14 +561,15 @@ internal static class BoneDatabase
         BoneTypeDict[name] = new((BoneTypeEnum)boneType, dir);
         if (hasRVar)
         {
-            BoneTypeDict[name + "R"] = new((BoneTypeEnum)boneType, dir);
+            string rVar = name + "R";
+            BoneTypeDict[rVar] = new((BoneTypeEnum)boneType, dir);
             if (boneType == 2)
-                ForearmVariantDict[name] = name + "R";
+                ForearmVariantDict[name] = rVar;
             else if (boneType == 6)
-                ShinVariantDict[name] = name + "R";
+                ShinVariantDict[name] = rVar;
             else if (boneType == 12)
-                KatarVariantDict[name] = name + "R";
-            Register1(name + "R", artType);
+                KatarVariantDict[name] = rVar;
+            Register1(rVar, artType);
         }
         if (name.EndsWith("Right"))
             AsymSwapDict[name] = name[..^"Right".Length];

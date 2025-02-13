@@ -147,10 +147,8 @@ public sealed class AnimationBuilder(ILoader loader)
             {
                 finalBoneName = overridenBoneName;
             }
-            else if (
-                BoneDatabase.AsymSwapDict.TryGetValue(boneName, out string? otherBoneName) &&
-                (boneType is null || !gfx.HasAsymmetrySwapFlag(boneType.Value.Type))
-            )
+            else if ((boneType is null || !gfx.HasAsymmetrySwapFlag(boneType.Value.Type)) &&
+                BoneDatabase.AsymSwapDict.TryGetValue(boneName, out string? otherBoneName))
             {
                 finalBoneName = otherBoneName;
             }
@@ -276,7 +274,7 @@ public sealed class AnimationBuilder(ILoader loader)
             {
                 if (MirroredBoneTypes.Contains(boneType.Type))
                 {
-                    double det = instance.Bone.ScaleX * instance.Bone.ScaleY - instance.Bone.RotateSkew0 * instance.Bone.RotateSkew1;
+                    float det = instance.Bone.ScaleX * instance.Bone.ScaleY - instance.Bone.RotateSkew0 * instance.Bone.RotateSkew1;
                     mirrored = (det < 0) != boneType.Dir;
                 }
                 hand = boneType.Type == BoneTypeEnum.HAND;
