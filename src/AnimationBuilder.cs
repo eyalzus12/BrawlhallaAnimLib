@@ -389,10 +389,10 @@ public sealed class AnimationBuilder(ILoader loader)
         List<IColorSwap> matchingColorSwaps = [];
         foreach (IColorSwap colorSwap in colorSwaps)
         {
-            if (colorSwap.ArtType == ArtTypeEnum.None || colorSwap.ArtType == artType)
-            {
-                matchingColorSwaps.Add(colorSwap);
-            }
+            if (colorSwap.NewColor == 0) continue;
+            if (colorSwap.ArtType != ArtTypeEnum.None && colorSwap.ArtType != artType) continue;
+
+            matchingColorSwaps.Add(colorSwap);
         }
 
         // no swaps left

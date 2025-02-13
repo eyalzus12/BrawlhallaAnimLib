@@ -219,14 +219,17 @@ public sealed class CostumeTypesGfx
             // color scheme
             foreach (ColorSchemeSwapEnum swapType in swapTypesList)
             {
+                // source is define
+                uint sourceColor = SwapDefines.GetValueOrDefault(swapType, 0u);
+                if (sourceColor == 0) continue;
+                // color exception
                 ColorSchemeSwapEnum targetSwapType = swapType;
                 if (colorException?.TryGetSwapRedirect(swapType, out ColorSchemeSwapEnum newSwapType) ?? false)
                 {
-                    targetSwapType = newSwapType;
+                    if (colorScheme.GetSwap(newSwapType) != 0)
+                        targetSwapType = newSwapType;
                 }
-
-                uint sourceColor = SwapDefines.GetValueOrDefault(swapType, 0u);
-                if (sourceColor == 0) continue;
+                // target from scheme
                 uint targetColor = colorScheme.GetSwap(targetSwapType);
                 if (targetColor == 0) continue;
                 InternalColorSwapImpl colorSwap = new()
