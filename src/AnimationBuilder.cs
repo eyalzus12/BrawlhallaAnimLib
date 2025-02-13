@@ -55,6 +55,7 @@ public sealed class AnimationBuilder(ILoader loader)
                 {
                     SwfFilePath = instance.FilePath,
                     SpriteName = instance.SpriteName,
+                    Frame = bone.Frame - 1,
                     AnimScale = gfx.AnimScale,
                     Transform = transform * boneTransform,
                     Tint = gfx.Tint,
@@ -83,6 +84,7 @@ public sealed class AnimationBuilder(ILoader loader)
             {
                 SwfFilePath = gfx.AnimFile,
                 SpriteName = gfx.AnimClass,
+                Frame = frame,
                 AnimScale = gfx.AnimScale,
                 Transform = transform,
                 Tint = gfx.Tint,

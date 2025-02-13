@@ -7,6 +7,7 @@ public abstract class BoneSprite
 {
     public required string SwfFilePath { get; init; }
 
+    public required long Frame { get; init; }
     public required double AnimScale { get; init; }
     public required Transform2D Transform { get; init; }
 

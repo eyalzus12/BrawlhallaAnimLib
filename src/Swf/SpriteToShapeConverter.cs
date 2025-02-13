@@ -9,7 +9,7 @@ namespace BrawlhallaAnimLib.Swf;
 
 public sealed class SpriteToShapeConverter(ILoader loader)
 {
-    public BoneShape[]? ConvertToShapes(BoneSprite boneSprite, long frame)
+    public BoneShape[]? ConvertToShapes(BoneSprite boneSprite)
     {
         string swfPath = boneSprite.SwfFilePath;
 
@@ -53,7 +53,7 @@ public sealed class SpriteToShapeConverter(ILoader loader)
 
         List<BoneShape> result = [];
 
-        long clampedFrame = MathUtils.SafeMod(frame, sprite.Frames.Length);
+        long clampedFrame = MathUtils.SafeMod(boneSprite.Frame, sprite.Frames.Length);
         SwfSpriteFrame spriteFrame = sprite.Frames[clampedFrame];
         foreach ((ushort depth, SwfSpriteFrameLayer layer) in spriteFrame.Layers)
         {
@@ -68,14 +68,9 @@ public sealed class SpriteToShapeConverter(ILoader loader)
             {
                 result.Add(new()
                 {
-                    SwfFilePath = swfPath,
-                    BoneName = spriteName,
                     ShapeId = shapeTag.ShapeID,
-                    AnimScale = boneSprite.AnimScale,
                     Transform = childTransform,
                     Tint = boneSprite.Tint,
-                    ColorSwapDict = boneSprite.ColorSwapDict,
-                    Opacity = boneSprite.Opacity,
                 });
             }
             else if (layerTag is DefineSpriteTag childSpriteTag)
@@ -85,13 +80,15 @@ public sealed class SpriteToShapeConverter(ILoader loader)
                 {
                     SwfFilePath = swfPath,
                     SpriteId = childSpriteId,
-                    AnimScale = boneSprite.AnimScale,
+                    Frame = boneSprite.Frame + layer.FrameOffset,
                     Transform = childTransform,
                     Tint = boneSprite.Tint,
-                    ColorSwapDict = boneSprite.ColorSwapDict,
-                    Opacity = boneSprite.Opacity,
+
+                    AnimScale = 0, // not used
+                    ColorSwapDict = null!, // not used
+                    Opacity = 0, // nnot used
                 };
-                BoneShape[]? shapes = ConvertToShapes(childSprite, frame + layer.FrameOffset);
+                BoneShape[]? shapes = ConvertToShapes(childSprite);
                 if (shapes is null) return null;
                 result.AddRange(shapes);
             }
