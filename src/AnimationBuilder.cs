@@ -27,8 +27,8 @@ public sealed class AnimationBuilder(ILoader loader)
         {
             if (!loader.TryGetAnmClass($"{gfx.AnimFile}/{gfx.AnimClass}", out IAnmClass? anmClass))
             {
-                return null;
-                //throw new ArgumentException($"Could not find anim class {gfx.AnimClass} in {gfx.AnimFile}. Make sure you loaded it.");
+                if (!loader.LoadAnms()) return null;
+                throw new ArgumentException($"Could not find anim class {gfx.AnimClass} in {gfx.AnimFile}. Make sure you loaded it.");
             }
             if (!anmClass.TryGetAnimation(animName, out IAnmAnimation? animation))
                 throw new ArgumentException($"No animation {animName} in anim class {gfx.AnimClass}");
@@ -384,41 +384,42 @@ public sealed class AnimationBuilder(ILoader loader)
 
     private bool BuildColorMap(BoneSpriteWithName sprite, BoneInstance instance, IEnumerable<IColorSwap> colorSwaps)
     {
-        ArtTypeEnum artType = BoneDatabase.ArtTypeDict.GetValueOrDefault(instance.OgBoneName, ArtTypeEnum.None);
+        // the art type and .a checks only tell us if we CAN swap. they do no filtering.
 
-        List<IColorSwap> matchingColorSwaps = [];
-        foreach (IColorSwap colorSwap in colorSwaps)
-        {
-            if (colorSwap.NewColor == 0) continue;
-            if (colorSwap.ArtType != ArtTypeEnum.None && colorSwap.ArtType != artType) continue;
-
-            matchingColorSwaps.Add(colorSwap);
-        }
-
-        // no swaps left
-        if (matchingColorSwaps.Count == 0) return true;
-
-        // now get .a
-
+        // get .a
         string boneSwfPath = sprite.SwfFilePath;
         if (!loader.LoadSwf(boneSwfPath))
             return false;
-
         // no .a
         if (!loader.TryGetScriptAVar(boneSwfPath, instance.SpriteName, out uint[]? a))
             return true;
+        HashSet<uint> aSet = [.. a];
+
+        // possible optimization: don't grab the .a if the art type check already fails
+
+        ArtTypeEnum artType = BoneDatabase.ArtTypeDict.GetValueOrDefault(instance.OgBoneName, ArtTypeEnum.None);
+
+        bool canColorSwap = false;
+        foreach (IColorSwap colorSwap in colorSwaps)
+        {
+            // no ||= in C# smh
+            bool goodSwap = false;
+            if (!goodSwap) goodSwap = colorSwap.ArtType == ArtTypeEnum.None || colorSwap.ArtType == artType;
+            if (!goodSwap) goodSwap = aSet.Contains(colorSwap.OldColor);
+
+            if (goodSwap)
+            {
+                canColorSwap = true;
+                continue;
+            }
+        }
+        if (!canColorSwap) return true;
+
+        // now we create the actual color swap dict
 
         HashSet<uint> oldColorsWithArt = [];
-
-        // filter to those that have a source in .a
-        HashSet<uint> possibleSourceColors = [.. a];
-        for (int i = matchingColorSwaps.Count - 1; i >= 0; --i)
+        foreach (IColorSwap colorSwap in colorSwaps.Reverse())
         {
-            IColorSwap colorSwap = matchingColorSwaps[i];
-
-            if (!possibleSourceColors.Contains(colorSwap.OldColor))
-                continue;
-
             // color swaps with art type take priority over those without
             if (colorSwap.ArtType == ArtTypeEnum.None && oldColorsWithArt.Contains(colorSwap.OldColor))
                 continue;
