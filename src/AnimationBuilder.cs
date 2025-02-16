@@ -9,7 +9,7 @@ using BrawlhallaAnimLib.Anm;
 
 namespace BrawlhallaAnimLib;
 
-public sealed class AnimationBuilder(ILoader loader)
+public static class AnimationBuilder
 {
     private static readonly string[] AnimationPrefixes = ["Animation_", "a_Animation_EB_", "a__LootBox", "a__PodiumRig"];
     private static bool IsAnmAnimation(string path)
@@ -18,7 +18,7 @@ public sealed class AnimationBuilder(ILoader loader)
     }
 
     // null if not loaded yet
-    public BoneSpriteWithName[]? BuildAnim(IGfxType gfx, string animName, long frame, Transform2D transform, bool isTooltip = false)
+    public static BoneSpriteWithName[]? BuildAnim(ILoader loader, IGfxType gfx, string animName, long frame, Transform2D transform, bool isTooltip = false)
     {
         transform *= Transform2D.CreateScale(gfx.AnimScale, gfx.AnimScale);
 
@@ -37,7 +37,7 @@ public sealed class AnimationBuilder(ILoader loader)
             long frameIndex = MathUtils.SafeMod(frame + animation.BaseStart, animation.Frames.Length);
             IAnmFrame anmFrame = animation.Frames[frameIndex];
 
-            List<BoneInstance>? bones = GetBoneInstances(anmFrame.Bones, gfx);
+            List<BoneInstance>? bones = GetBoneInstances(loader, anmFrame.Bones, gfx);
             if (bones is null) return null;
 
             SetAsymBonesVisibility(bones, gfx, transform.ScaleX * transform.ScaleY < 0, isTooltip);
@@ -62,7 +62,7 @@ public sealed class AnimationBuilder(ILoader loader)
                     Opacity = bone.Opacity,
                 };
 
-                if (!BuildColorMap(boneSprite, instance, gfx.ColorSwaps))
+                if (!BuildColorMap(loader, boneSprite, instance, gfx.ColorSwaps))
                     return null;
 
                 result.Add(boneSprite);
@@ -90,7 +90,7 @@ public sealed class AnimationBuilder(ILoader loader)
                 Tint = gfx.Tint,
                 Opacity = 1,
             };
-            if (!BuildColorMap(boneSprite, fakeInstance, gfx.ColorSwaps)) return null;
+            if (!BuildColorMap(loader, boneSprite, fakeInstance, gfx.ColorSwaps)) return null;
 
             return [boneSprite];
         }
@@ -107,7 +107,7 @@ public sealed class AnimationBuilder(ILoader loader)
         BoneTypeEnum._HAIR,
     ];
 
-    private List<BoneInstance>? GetBoneInstances(IAnmBone[] bones, IGfxType gfx)
+    private static List<BoneInstance>? GetBoneInstances(ILoader loader, IAnmBone[] bones, IGfxType gfx)
     {
         if (!loader.LoadBoneTypes())
             return null;
@@ -168,7 +168,7 @@ public sealed class AnimationBuilder(ILoader loader)
                 handBoneName = "";
             }
 
-            if (!FindCustomArt(boneName, finalBoneName, gfx.CustomArts, right, out ICustomArt? customArt))
+            if (!FindCustomArt(loader, boneName, finalBoneName, gfx.CustomArts, right, out ICustomArt? customArt))
                 return null;
 
             string customArtSuffix = customArt is not null ? $"_{customArt.Name}" : "";
@@ -212,7 +212,7 @@ public sealed class AnimationBuilder(ILoader loader)
     }
 
     // returns false if swf not loaded yet
-    private bool FindCustomArt(string ogBoneName, string boneName, IEnumerable<ICustomArt> customArts, bool right, out ICustomArt? chosen)
+    private static bool FindCustomArt(ILoader loader, string ogBoneName, string boneName, IEnumerable<ICustomArt> customArts, bool right, out ICustomArt? chosen)
     {
         chosen = null;
 
@@ -382,7 +382,7 @@ public sealed class AnimationBuilder(ILoader loader)
         }
     }
 
-    private bool BuildColorMap(BoneSpriteWithName sprite, BoneInstance instance, IEnumerable<IColorSwap> colorSwaps)
+    private static bool BuildColorMap(ILoader loader, BoneSpriteWithName sprite, BoneInstance instance, IEnumerable<IColorSwap> colorSwaps)
     {
         // the art type and .a checks only tell us if we CAN swap. they do no filtering.
 

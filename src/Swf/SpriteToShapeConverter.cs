@@ -7,9 +7,9 @@ using SwfLib.Tags.ShapeTags;
 
 namespace BrawlhallaAnimLib.Swf;
 
-public sealed class SpriteToShapeConverter(ILoader loader)
+public static class SpriteToShapeConverter
 {
-    public BoneShape[]? ConvertToShapes(BoneSprite boneSprite)
+    public static BoneShape[]? ConvertToShapes(ILoader loader, BoneSprite boneSprite)
     {
         string swfPath = boneSprite.SwfFilePath;
 
@@ -88,7 +88,7 @@ public sealed class SpriteToShapeConverter(ILoader loader)
                     ColorSwapDict = null!, // not used
                     Opacity = 0, // nnot used
                 };
-                BoneShape[]? shapes = ConvertToShapes(childSprite);
+                BoneShape[]? shapes = ConvertToShapes(loader, childSprite);
                 if (shapes is null) return null;
                 result.AddRange(shapes);
             }
