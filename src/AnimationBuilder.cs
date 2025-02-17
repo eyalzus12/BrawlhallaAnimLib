@@ -420,14 +420,19 @@ public static class AnimationBuilder
         HashSet<uint> oldColorsWithArt = [];
         foreach (IColorSwap colorSwap in colorSwaps.Reverse())
         {
-            // color swaps with art type take priority over those without
-            if (colorSwap.ArtType == ArtTypeEnum.None && oldColorsWithArt.Contains(colorSwap.OldColor))
-                continue;
+            // filter out bad art types
+            if (colorSwap.ArtType != ArtTypeEnum.None && colorSwap.ArtType != artType) continue;
 
-            sprite.ColorSwapDict[colorSwap.OldColor] = colorSwap.NewColor;
-
-            if (colorSwap.ArtType != ArtTypeEnum.None)
-                oldColorsWithArt.Add(colorSwap.OldColor);
+            // later color swaps override earlier, but color swaps that match the art get priority
+            bool artPriority = colorSwap.ArtType != ArtTypeEnum.None && colorSwap.ArtType == artType;
+            if (artPriority || !oldColorsWithArt.Contains(colorSwap.OldColor))
+            {
+                sprite.ColorSwapDict[colorSwap.OldColor] = colorSwap.NewColor;
+                if (artPriority)
+                {
+                    oldColorsWithArt.Add(colorSwap.OldColor);
+                }
+            }
         }
 
         return true;
