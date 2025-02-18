@@ -381,34 +381,36 @@ public static class AnimationBuilder
 
     private static bool BuildColorMap(ILoader loader, BoneSpriteWithName sprite, BoneInstance instance, IEnumerable<IColorSwap> colorSwaps)
     {
-        // the art type and .a checks only tell us if we CAN swap. they do no filtering.
-
-        // get .a
-        string boneSwfPath = sprite.SwfFilePath;
-        if (!loader.LoadSwf(boneSwfPath))
-            return false;
-        // no .a
-        if (!loader.TryGetScriptAVar(boneSwfPath, instance.SpriteName, out uint[]? a))
-            return true;
-        HashSet<uint> aSet = [.. a];
-
-        // possible optimization: don't grab the .a if the art type check already fails
+        // the .a checks only tell us if we CAN swap. they do no filtering.
 
         ArtTypeEnum artType = BoneDatabase.ArtTypeDict.GetValueOrDefault(instance.OgBoneName, ArtTypeEnum.None);
 
+        HashSet<uint>? aSet = null;
         bool canColorSwap = false;
         foreach (IColorSwap colorSwap in colorSwaps)
         {
-            // no ||= in C# smh
-            bool goodSwap = false;
-            if (!goodSwap) goodSwap = colorSwap.ArtType == ArtTypeEnum.None || colorSwap.ArtType == artType;
-            if (!goodSwap) goodSwap = aSet.Contains(colorSwap.OldColor);
-
-            if (goodSwap)
-            {
-                canColorSwap = true;
+            // art mismatch
+            if (colorSwap.ArtType != ArtTypeEnum.None && colorSwap.ArtType != artType)
                 continue;
+
+            if (aSet is null)
+            {
+                // get .a
+                string boneSwfPath = sprite.SwfFilePath;
+                if (!loader.LoadSwf(boneSwfPath))
+                    return false;
+                // no .a
+                if (!loader.TryGetScriptAVar(boneSwfPath, instance.SpriteName, out uint[]? a))
+                    return true;
+                aSet = [.. a];
             }
+
+            // .a mismatch
+            if (!aSet.Contains(colorSwap.OldColor)) continue;
+
+            // if we reached here, we have a valid color swap
+            canColorSwap = true;
+            break;
         }
         if (!canColorSwap) return true;
 
@@ -418,7 +420,8 @@ public static class AnimationBuilder
         foreach (IColorSwap colorSwap in colorSwaps.Reverse())
         {
             // filter out bad art types
-            if (colorSwap.ArtType != ArtTypeEnum.None && colorSwap.ArtType != artType) continue;
+            if (colorSwap.ArtType != ArtTypeEnum.None && colorSwap.ArtType != artType)
+                continue;
 
             // later color swaps override earlier, but color swaps that match the art get priority
             bool artPriority = colorSwap.ArtType != ArtTypeEnum.None && colorSwap.ArtType == artType;
