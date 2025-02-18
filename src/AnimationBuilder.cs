@@ -72,7 +72,7 @@ public static class AnimationBuilder
             BoneInstance fakeInstance = new()
             {
                 FilePath = gfx.AnimFile,
-                OgBoneName = null!,
+                OgBoneName = gfx.AnimClass,
                 SpriteName = gfx.AnimClass,
                 Bone = null!,
                 Visible = true,
