@@ -26,10 +26,7 @@ public static class AnimationBuilder
         if (IsAnmAnimation(gfx.AnimFile))
         {
             if (!loader.TryGetAnmClass($"{gfx.AnimFile}/{gfx.AnimClass}", out IAnmClass? anmClass))
-            {
-                if (!loader.LoadAnms()) return null;
                 throw new ArgumentException($"Could not find anim class {gfx.AnimClass} in {gfx.AnimFile}. Make sure you loaded it.");
-            }
             if (!anmClass.TryGetAnimation(animName, out IAnmAnimation? animation))
                 throw new ArgumentException($"No animation {animName} in anim class {gfx.AnimClass}");
             if (animation.Frames.Length == 0)
