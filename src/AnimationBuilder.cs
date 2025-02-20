@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using SwfLib.Tags;
 using BrawlhallaAnimLib.Bones;
 using BrawlhallaAnimLib.Gfx;
 using BrawlhallaAnimLib.Math;
@@ -15,6 +15,31 @@ public static class AnimationBuilder
     private static bool IsAnmAnimation(string path)
     {
         return path == "UI_TooltipAnimations.swf" || AnimationPrefixes.Any(path.StartsWith);
+    }
+
+    // null if not loaded yet
+    public static long? GetAnimFrameCount(ILoader loader, string animFile, string animClass, string animName)
+    {
+        if (IsAnmAnimation(animFile))
+        {
+            if (!loader.TryGetAnmClass($"{animFile}/{animClass}", out IAnmClass? anmClass))
+                throw new ArgumentException($"Could not find anim class {animClass} in {animFile}. Make sure you loaded it.");
+            if (!anmClass.TryGetAnimation(animName, out IAnmAnimation? animation))
+                throw new ArgumentException($"No animation {animName} in anim class {animClass}");
+            return animation.Frames.Length;
+        }
+        else
+        {
+            if (!loader.LoadSwf(animFile))
+                return null;
+            if (!loader.TryGetSymbolId(animFile, animClass, out ushort spriteId))
+                throw new ArgumentException($"Sprite {animClass} not found in {animFile}");
+            if (!loader.TryGetTag(animFile, spriteId, out SwfTagBase? tag))
+                throw new ArgumentException($"Tag id {spriteId} for sprite {animClass} not found in {animFile}");
+            if (tag is not DefineSpriteTag sprite)
+                throw new ArgumentException($"Tag id {spriteId} does not point to a sprite in {animFile}");
+            return sprite.FramesCount;
+        }
     }
 
     // null if not loaded yet

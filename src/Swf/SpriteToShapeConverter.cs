@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using BrawlhallaAnimLib.Bones;
-using BrawlhallaAnimLib.Math;
 using SwfLib.Tags;
 using SwfLib.Tags.ShapeTags;
+using BrawlhallaAnimLib.Bones;
+using BrawlhallaAnimLib.Math;
 
 namespace BrawlhallaAnimLib.Swf;
 
