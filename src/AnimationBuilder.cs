@@ -11,16 +11,19 @@ namespace BrawlhallaAnimLib;
 
 public static class AnimationBuilder
 {
-    private static readonly string[] AnimationPrefixes = ["Animation_", "a_Animation_EB_", "a__LootBox", "a__PodiumRig"];
-    private static bool IsAnmAnimation(string path)
+    private static readonly string[] AnimClassPrefixes = ["a_Animation_EB_", "a__LootBox", "a__PodiumRig"];
+    private static bool IsAnmAnimation(string animFile, string animClass)
     {
-        return path == "UI_TooltipAnimations.swf" || AnimationPrefixes.Any(path.StartsWith);
+        return
+            animFile == "UI_TooltipAnimations.swf" ||
+            animFile.StartsWith("Animation_") ||
+            AnimClassPrefixes.Any(animClass.StartsWith);
     }
 
     // null if not loaded yet
     public static long? GetAnimFrameCount(ILoader loader, string animFile, string animClass, string animName)
     {
-        if (IsAnmAnimation(animFile))
+        if (IsAnmAnimation(animFile, animClass))
         {
             if (!loader.TryGetAnmClass($"{animFile}/{animClass}", out IAnmClass? anmClass))
                 throw new ArgumentException($"Could not find anim class {animClass} in {animFile}. Make sure you loaded it.");
@@ -48,7 +51,7 @@ public static class AnimationBuilder
         transform *= Transform2D.CreateScale(gfx.AnimScale, gfx.AnimScale);
 
         // anm animation
-        if (IsAnmAnimation(gfx.AnimFile))
+        if (IsAnmAnimation(gfx.AnimFile, gfx.AnimClass))
         {
             if (!loader.TryGetAnmClass($"{gfx.AnimFile}/{gfx.AnimClass}", out IAnmClass? anmClass))
                 throw new ArgumentException($"Could not find anim class {gfx.AnimClass} in {gfx.AnimFile}. Make sure you loaded it.");
