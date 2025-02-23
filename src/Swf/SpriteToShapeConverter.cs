@@ -4,6 +4,7 @@ using SwfLib.Tags;
 using SwfLib.Tags.ShapeTags;
 using BrawlhallaAnimLib.Bones;
 using BrawlhallaAnimLib.Math;
+using SwfLib.Tags.TextTags;
 
 namespace BrawlhallaAnimLib.Swf;
 
@@ -58,7 +59,7 @@ public static class SpriteToShapeConverter
         foreach ((ushort depth, SwfSpriteFrameLayer layer) in spriteFrame.Layers)
         {
             if (!loader.TryGetTag(swfPath, layer.CharacterId, out SwfTagBase? layerTag))
-                throw new ArgumentException($"Sprite {spriteName} has invalid character id {layer.CharacterId} at depth {depth}");
+                throw new ArgumentException($"Sprite {spriteName} has invalid character id {layer.CharacterId} at depth {depth} in {swfPath}");
 
             Transform2D layerTransform = MathUtils.SwfMatrixToTransform(layer.Matrix);
             Transform2D childTransform = boneSprite.Transform * layerTransform;
@@ -92,9 +93,14 @@ public static class SpriteToShapeConverter
                 if (shapes is null) return null;
                 result.AddRange(shapes);
             }
+            else if (layerTag is DefineTextBaseTag text)
+            {
+                // we don't handle text because all DefineText in the game are empty strings
+                // how tf did this happen
+            }
             else
             {
-                throw new ArgumentException($"Sprite {spriteName} has unknown tag type {layerTag.TagType} at depth {depth}");
+                throw new ArgumentException($"Sprite {spriteName} has unimplemented tag type {layerTag.TagType} at depth {depth} in {swfPath}");
             }
         }
 
