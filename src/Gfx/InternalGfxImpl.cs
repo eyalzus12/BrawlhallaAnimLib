@@ -7,8 +7,8 @@ internal delegate bool TryGetBoneOverride(string bone, [MaybeNullWhen(false)] ou
 
 internal sealed class InternalGfxImpl : IGfxType
 {
-    public string AnimFile { get; internal set; } = null!;
-    public string AnimClass { get; internal set; } = null!;
+    public required string AnimFile { get; internal set; }
+    public required string AnimClass { get; internal set; }
 
     public double AnimScale { get; internal set; } = 1;
 

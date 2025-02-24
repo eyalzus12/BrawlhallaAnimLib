@@ -193,7 +193,7 @@ public static class AnimationBuilder
                 handBoneName = "";
             }
 
-            if (!FindCustomArt(loader, boneName, finalBoneName, gfx.CustomArts, right, out ICustomArt? customArt))
+            if (!FindCustomArt(loader, boneName, finalBoneName, gfx.CustomArts, isHand ? right : mirrored, out ICustomArt? customArt))
                 return null;
 
             string customArtSuffix = customArt is not null ? $"_{customArt.Name}" : "";
@@ -244,7 +244,7 @@ public static class AnimationBuilder
         ArtTypeEnum artType = BoneDatabase.ArtTypeDict.GetValueOrDefault(ogBoneName, ArtTypeEnum.None);
         foreach (ICustomArt ca in customArts.Reverse())
         {
-            bool rightMatches = right || !ca.Right;
+            bool rightMatches = !ca.Right || right;
             bool artTypeMatches = artType == ArtTypeEnum.None || ca.Type == ArtTypeEnum.None || ca.Type == artType;
             if (rightMatches && artTypeMatches)
             {

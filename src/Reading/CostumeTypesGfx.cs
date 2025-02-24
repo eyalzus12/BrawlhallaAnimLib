@@ -72,69 +72,69 @@ public sealed class CostumeTypesGfx
             }
             else if (key == "UseRightTorso")
             {
-                UseRightTorso = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                UseRightTorso = ParserUtils.ParseBool(value);
             }
             else if (key == "UseRightJaw")
             {
-                UseRightJaw = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                UseRightJaw = ParserUtils.ParseBool(value);
             }
             else if (key == "UseRightEyes")
             {
-                UseRightEyes = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                UseRightEyes = ParserUtils.ParseBool(value);
             }
             else if (key == "UseRightHair")
             {
-                UseRightHair = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                UseRightHair = ParserUtils.ParseBool(value);
             }
             else if (key == "UseRightMouth")
             {
-                UseRightMouth = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                UseRightMouth = ParserUtils.ParseBool(value);
             }
             else if (key == "UseRightForearm")
             {
-                UseRightForearm = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                UseRightForearm = ParserUtils.ParseBool(value);
             }
             else if (key == "UseRightShoulder1")
             {
-                UseRightShoulder1 = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                UseRightShoulder1 = ParserUtils.ParseBool(value);
             }
             else if (key == "UseRightLeg1")
             {
-                UseRightLeg1 = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                UseRightLeg1 = ParserUtils.ParseBool(value);
             }
             else if (key == "UseRightShin")
             {
-                UseRightShin = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                UseRightShin = ParserUtils.ParseBool(value);
             }
             else if (key == "UseTrueLeftRightHands")
             {
-                UseTrueLeftRightHands = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                UseTrueLeftRightHands = ParserUtils.ParseBool(value);
             }
             else if (key == "HidePaperDollRightPistol")
             {
-                HidePaperDollRightPistol = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                HidePaperDollRightPistol = ParserUtils.ParseBool(value);
             }
             else if (key.StartsWith("GfxType.CustomArt"))
             {
                 baseCustomArts ??= [];
-                baseCustomArts.Add(FromCustomArtCell(value, true, ArtTypeEnum.Costume));
+                baseCustomArts.Add(ParserUtils.ParseCustomArt(value, true, ArtTypeEnum.Costume));
             }
             else if (key.StartsWith("SwapCustomArt"))
             {
                 swapCustomArts ??= [];
-                swapCustomArts.Add(FromCustomArtCell(value, false, ArtTypeEnum.None));
+                swapCustomArts.Add(ParserUtils.ParseCustomArt(value, false, ArtTypeEnum.None));
             }
             else if (key == "HeadGfxCustomArt")
             {
-                headCustomArt = FromCustomArtCell(value, false, ArtTypeEnum.None);
+                headCustomArt = ParserUtils.ParseCustomArt(value, false, ArtTypeEnum.None);
             }
             else if (key == "DefaultCape")
             {
-                capeCustomArt = FromCustomArtCell(value, true, ArtTypeEnum.Costume);
+                capeCustomArt = ParserUtils.ParseCustomArt(value, true, ArtTypeEnum.Costume);
             }
             else if (key.StartsWith("GfxType.ColorSwap"))
             {
-                InternalColorSwapImpl colorSwap = FromColorSwapCell(value);
+                InternalColorSwapImpl colorSwap = ParserUtils.ParseColorSwap(value, ArtTypeEnum.Costume);
                 baseColorSwaps ??= [];
                 baseColorSwaps.Add(colorSwap);
             }
@@ -309,55 +309,5 @@ public sealed class CostumeTypesGfx
         }
 
         return gfxResult;
-    }
-
-    private static InternalCustomArtImpl FromCustomArtCell(string value, bool grabType, ArtTypeEnum defaultType)
-    {
-        bool right = grabType && value.StartsWith("RIGHT:");
-
-        ArtTypeEnum type = defaultType;
-        if (value.StartsWith("C:")) type = ArtTypeEnum.Costume;
-        else if (value.StartsWith("W:")) type = ArtTypeEnum.Weapon;
-
-        string rest = grabType ? value[(value.IndexOf(':') + 1)..] : value;
-        string[] parts = rest.Split('/');
-
-        if (parts.Length < 2)
-            throw new ArgumentException($"Invalid CustomArt string {rest}");
-
-        string fileName = parts[0];
-        string name = parts[1];
-
-        return new()
-        {
-            Right = right,
-            Type = type,
-            FileName = fileName,
-            Name = name,
-        };
-    }
-
-    private static InternalColorSwapImpl FromColorSwapCell(string value)
-    {
-        string[] parts = value.Split('=');
-        if (parts.Length != 2)
-            throw new ArgumentException($"Invalid color swap string {value}");
-
-        string oldColorString = parts[0];
-        if (oldColorString[0] != '0')
-            throw new NotImplementedException($"Color swap color must start with 0");
-        uint oldColor = ParserUtils.ParseHexString(oldColorString);
-
-        string newColorString = parts[1];
-        if (newColorString[0] != '0')
-            throw new NotImplementedException($"Color swap color must start with 0");
-        uint newColor = ParserUtils.ParseHexString(newColorString);
-
-        return new()
-        {
-            ArtType = ArtTypeEnum.Costume,
-            OldColor = oldColor,
-            NewColor = newColor,
-        };
     }
 }

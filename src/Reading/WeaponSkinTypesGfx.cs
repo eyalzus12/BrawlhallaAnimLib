@@ -60,15 +60,15 @@ public sealed class WeaponSkinTypesGfx
             }
             else if (key == "UseRightGauntlet")
             {
-                UseRightGauntlet = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                UseRightGauntlet = ParserUtils.ParseBool(value);
             }
             else if (key == "UseRightKatar")
             {
-                UseRightKatar = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                UseRightKatar = ParserUtils.ParseBool(value);
             }
             else if (key == "HideRightPistol2D")
             {
-                HideRightPistol2D = value.Equals("TRUE", StringComparison.InvariantCultureIgnoreCase);
+                HideRightPistol2D = ParserUtils.ParseBool(value);
             }
             else if (key == "AsymmetrySwapFlags")
             {
@@ -92,7 +92,7 @@ public sealed class WeaponSkinTypesGfx
                 // the game also checks for Costume, but sets to ArtTypeEnum.Weapon instead of ArtTypeEnum.Costume
                 // is that a bug?
 
-                CustomArtsInternal.Add(FromCustomArtCell(value, true, defaultType));
+                CustomArtsInternal.Add(ParserUtils.ParseCustomArt(value, true, defaultType));
             }
             else if (key.EndsWith("_Define"))
             {
@@ -318,31 +318,5 @@ public sealed class WeaponSkinTypesGfx
         }
 
         return gfxResult;
-    }
-
-    private static InternalCustomArtImpl FromCustomArtCell(string value, bool grabType, ArtTypeEnum defaultType)
-    {
-        bool right = grabType && value.StartsWith("RIGHT:");
-
-        ArtTypeEnum type = defaultType;
-        if (value.StartsWith("C:")) type = ArtTypeEnum.Costume;
-        else if (value.StartsWith("W:")) type = ArtTypeEnum.Weapon;
-
-        string rest = grabType ? value[(value.IndexOf(':') + 1)..] : value;
-        string[] parts = rest.Split('/');
-
-        if (parts.Length < 2)
-            throw new ArgumentException($"Invalid CustomArt string {rest}");
-
-        string fileName = parts[0];
-        string name = parts[1];
-
-        return new()
-        {
-            Right = right,
-            Type = type,
-            FileName = fileName,
-            Name = name,
-        };
     }
 }
