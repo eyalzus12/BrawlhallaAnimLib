@@ -26,22 +26,21 @@ public sealed class WeaponSkinTypesGfx
         (ColorSchemeSwapEnum.HandsSkinDk, 0xFFCC99, 0),
     ];
 
-    internal string WeaponSkinName { get; set; } = null!;
-    internal uint AsymmetrySwapFlags { get; set; } = 0;
-    internal bool UseRightGauntlet { get; set; }
-    internal bool UseRightKatar { get; set; }
-    internal bool HideRightPistol2D { get; set; }
-    internal List<InternalCustomArtImpl> CustomArtsInternal { get; } = [];
-    internal List<InternalColorSwapImpl> ColorSwapsInternal { get; } = [];
+    internal string WeaponSkinName { get; } = null!;
+    internal uint AsymmetrySwapFlags { get; } = 0;
+    internal bool UseRightGauntlet { get; } = false;
+    internal bool UseRightKatar { get; } = false;
+    internal bool HideRightPistol2D { get; } = false;
+    internal List<InternalCustomArtImpl> BaseCustomArts { get; } = [];
 
-    internal bool HasPickupCustomArt { get; set; } = false;
+    internal bool HasPickupCustomArt { get; } = false;
     internal Dictionary<ColorSchemeSwapEnum, uint> SwapDefines { get; } = [];
-    internal string? BaseWeapon { get; set; } = null;
+    internal string? BaseWeapon { get; } = null;
 
-    internal ColorSchemeSwapEnum? AttackFxLt_Enum { get; set; } = null;
-    internal uint AttackFxLt_Color { get; set; } = 0;
-    internal ColorSchemeSwapEnum? AttackFxDk_Enum { get; set; } = null;
-    internal uint AttackFxDk_Color { get; set; } = 0;
+    internal ColorSchemeSwapEnum? AttackFxLt_Enum { get; } = null;
+    internal uint AttackFxLt_Color { get; } = 0;
+    internal ColorSchemeSwapEnum? AttackFxDk_Enum { get; } = null;
+    internal uint AttackFxDk_Color { get; } = 0;
 
 
     public WeaponSkinTypesGfx(ICsvRow row, ICsvReader costumeTypesReader)
@@ -92,7 +91,7 @@ public sealed class WeaponSkinTypesGfx
                 // the game also checks for Costume, but sets to ArtTypeEnum.Weapon instead of ArtTypeEnum.Costume
                 // is that a bug?
 
-                CustomArtsInternal.Add(ParserUtils.ParseCustomArt(value, true, defaultType));
+                BaseCustomArts.Add(ParserUtils.ParseCustomArt(value, true, defaultType));
             }
             else if (key.EndsWith("_Define"))
             {
@@ -179,9 +178,9 @@ public sealed class WeaponSkinTypesGfx
             UseRightShin = gfxType.UseRightShin,
             UseTrueLeftRightHands = gfxType.UseTrueLeftRightHands,
             HidePaperDollRightPistol = gfxType.HidePaperDollRightPistol,
-            CustomArtsInternal = [.. gfxType.CustomArts, .. CustomArtsInternal],
-            ColorSwapsInternal = [.. gfxType.ColorSwaps, .. ColorSwapsInternal],
-            BoneOverrideDelegate = gfxType.TryGetBoneOverride,
+            CustomArtsInternal = [.. gfxType.CustomArts, .. BaseCustomArts],
+            ColorSwapsInternal = [.. gfxType.ColorSwaps],
+            BoneOverride = new(gfxType.BoneOverride),
             UseRightGauntlet = UseRightGauntlet,
             UseRightKatar = UseRightKatar,
             HideRightPistol2D = HideRightPistol2D,

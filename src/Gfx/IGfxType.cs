@@ -28,7 +28,8 @@ public interface IGfxType
     bool UseRightLeg1 { get; }
     bool UseRightShin { get; }
     bool UseTrueLeftRightHands { get; }
-    bool TryGetBoneOverride(string bone, [MaybeNullWhen(false)] out string newBone);
+    IReadOnlyDictionary<string, string> BoneOverride { get; }
+    public bool TryGetBoneOverride(string bone, [MaybeNullWhen(false)] out string newBone) => BoneOverride.TryGetValue(bone, out newBone);
     bool HidePaperDollRightPistol { get; }
     // these are set in weaponSkinType.csv
     bool UseRightGauntlet { get; }

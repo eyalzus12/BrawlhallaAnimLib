@@ -1,9 +1,6 @@
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace BrawlhallaAnimLib.Gfx;
-
-internal delegate bool TryGetBoneOverride(string bone, [MaybeNullWhen(false)] out string newBone);
 
 internal sealed class InternalGfxImpl : IGfxType
 {
@@ -37,13 +34,6 @@ internal sealed class InternalGfxImpl : IGfxType
 
     public uint AsymmetrySwapFlags { get; internal set; } = 0;
 
-    internal TryGetBoneOverride? BoneOverrideDelegate { get; init; } = null;
-    internal Dictionary<string, string> BoneOverrides { get; init; } = [];
-    public bool TryGetBoneOverride(string bone, [MaybeNullWhen(false)] out string newBone)
-    {
-        if (BoneOverrides.TryGetValue(bone, out newBone)) return true;
-        if (BoneOverrideDelegate is not null && BoneOverrideDelegate(bone, out newBone)) return true;
-        newBone = null;
-        return false;
-    }
+    internal Dictionary<string, string> BoneOverride { get; init; } = [];
+    IReadOnlyDictionary<string, string> IGfxType.BoneOverride => BoneOverride;
 }

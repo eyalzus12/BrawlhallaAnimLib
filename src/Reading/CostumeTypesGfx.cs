@@ -15,23 +15,25 @@ public sealed class CostumeTypesGfx
         Type = ArtTypeEnum.Costume,
     };
 
-    // TODO: maybe expose those as public?
-    internal string CostumeName { get; set; } = null!;
-    internal uint AsymmetrySwapFlags { get; set; } = 0;
-    internal bool UseRightTorso { get; set; }
-    internal bool UseRightJaw { get; set; }
-    internal bool UseRightEyes { get; set; }
-    internal bool UseRightMouth { get; set; }
-    internal bool UseRightHair { get; set; }
-    internal bool UseRightForearm { get; set; }
-    internal bool UseRightShoulder1 { get; set; }
-    internal bool UseRightLeg1 { get; set; }
-    internal bool UseRightShin { get; set; }
-    internal bool UseTrueLeftRightHands { get; set; }
-    internal bool HidePaperDollRightPistol { get; set; }
-    internal List<InternalCustomArtImpl> CustomArtsInternal { get; } = [];
-    internal List<InternalColorSwapImpl> ColorSwapsInternal { get; } = [];
-    internal Dictionary<string, string> BoneOverrides { get; } = [];
+    internal string CostumeName { get; } = null!;
+    internal uint AsymmetrySwapFlags { get; } = 0;
+    internal bool UseRightTorso { get; } = false;
+    internal bool UseRightJaw { get; } = false;
+    internal bool UseRightEyes { get; } = false;
+    internal bool UseRightMouth { get; } = false;
+    internal bool UseRightHair { get; } = false;
+    internal bool UseRightForearm { get; } = false;
+    internal bool UseRightShoulder1 { get; } = false;
+    internal bool UseRightLeg1 { get; } = false;
+    internal bool UseRightShin { get; } = false;
+    internal bool UseTrueLeftRightHands { get; } = false;
+    internal bool HidePaperDollRightPistol { get; } = false;
+    internal List<InternalCustomArtImpl> BaseCustomArts { get; } = [];
+    internal List<InternalCustomArtImpl> SwapCustomArts { get; } = [];
+    internal InternalCustomArtImpl? HeadCustomArt { get; } = null;
+    internal InternalCustomArtImpl? CapeCustomArt { get; } = null;
+    internal List<InternalColorSwapImpl> BaseColorSwaps { get; } = [];
+    internal Dictionary<string, string> BoneOverride { get; } = [];
 
     internal Dictionary<ColorSchemeSwapEnum, uint> SwapDefines { get; } = [];
     internal Dictionary<ColorSchemeSwapEnum, ColorSchemeSwapEnum> IndirectSwaps { get; } = [];
@@ -39,13 +41,6 @@ public sealed class CostumeTypesGfx
 
     public CostumeTypesGfx(ICsvRow row)
     {
-        List<InternalCustomArtImpl>? baseCustomArts = null;
-        List<InternalCustomArtImpl>? swapCustomArts = null;
-        InternalCustomArtImpl? headCustomArt = null;
-        InternalCustomArtImpl? capeCustomArt = null;
-
-        List<InternalColorSwapImpl>? baseColorSwaps = null;
-
         foreach ((string key, string value) in row.ColEntries)
         {
             if (value == "") continue;
@@ -68,7 +63,7 @@ public sealed class CostumeTypesGfx
             else if (key.StartsWith("BoneOverride"))
             {
                 string[] parts = value.Split(',');
-                BoneOverrides[parts[0]] = parts[1];
+                BoneOverride[parts[0]] = parts[1];
             }
             else if (key == "UseRightTorso")
             {
@@ -116,27 +111,24 @@ public sealed class CostumeTypesGfx
             }
             else if (key.StartsWith("GfxType.CustomArt"))
             {
-                baseCustomArts ??= [];
-                baseCustomArts.Add(ParserUtils.ParseCustomArt(value, true, ArtTypeEnum.Costume));
+                BaseCustomArts.Add(ParserUtils.ParseCustomArt(value, true, ArtTypeEnum.Costume));
             }
             else if (key.StartsWith("SwapCustomArt"))
             {
-                swapCustomArts ??= [];
-                swapCustomArts.Add(ParserUtils.ParseCustomArt(value, false, ArtTypeEnum.None));
+                SwapCustomArts.Add(ParserUtils.ParseCustomArt(value, false, ArtTypeEnum.None));
             }
             else if (key == "HeadGfxCustomArt")
             {
-                headCustomArt = ParserUtils.ParseCustomArt(value, false, ArtTypeEnum.None);
+                HeadCustomArt = ParserUtils.ParseCustomArt(value, false, ArtTypeEnum.None);
             }
             else if (key == "DefaultCape")
             {
-                capeCustomArt = ParserUtils.ParseCustomArt(value, true, ArtTypeEnum.Costume);
+                CapeCustomArt = ParserUtils.ParseCustomArt(value, true, ArtTypeEnum.Costume);
             }
             else if (key.StartsWith("GfxType.ColorSwap"))
             {
                 InternalColorSwapImpl colorSwap = ParserUtils.ParseColorSwap(value, ArtTypeEnum.Costume);
-                baseColorSwaps ??= [];
-                baseColorSwaps.Add(colorSwap);
+                BaseColorSwaps.Add(colorSwap);
             }
             else if (key.EndsWith("_Define"))
             {
@@ -164,20 +156,9 @@ public sealed class CostumeTypesGfx
                 }
             }
         }
-
-        if (baseCustomArts is not null)
-            CustomArtsInternal.AddRange(baseCustomArts);
-        if (swapCustomArts is not null)
-            CustomArtsInternal.AddRange(swapCustomArts);
-        if (headCustomArt is not null)
-            CustomArtsInternal.Add(headCustomArt);
-        CustomArtsInternal.Add(capeCustomArt ?? NoCapeCustomArt);
-
-        if (baseColorSwaps is not null)
-            ColorSwapsInternal.AddRange(baseColorSwaps);
     }
 
-    public IGfxType ToGfxType(IGfxType gfxType, IColorSchemeType? colorScheme = null, IColorExceptionTypes? colorExceptions = null)
+    public IGfxType ToGfxType(IGfxType gfxType, IColorSchemeType? colorScheme = null, IColorExceptionTypes? colorExceptions = null, bool headSwap = false, bool noSwapArt = false)
     {
         InternalGfxImpl gfxResult = new()
         {
@@ -185,7 +166,7 @@ public sealed class CostumeTypesGfx
             AnimClass = gfxType.AnimClass,
             AnimScale = gfxType.AnimScale,
             Tint = gfxType.Tint,
-            AsymmetrySwapFlags = AsymmetrySwapFlags,
+            AsymmetrySwapFlags = gfxType.AsymmetrySwapFlags | AsymmetrySwapFlags,
             UseRightTorso = UseRightTorso,
             UseRightJaw = UseRightJaw,
             UseRightEyes = UseRightEyes,
@@ -197,10 +178,27 @@ public sealed class CostumeTypesGfx
             UseRightShin = UseRightShin,
             UseTrueLeftRightHands = UseTrueLeftRightHands,
             HidePaperDollRightPistol = HidePaperDollRightPistol,
-            CustomArtsInternal = [.. CustomArtsInternal],
-            ColorSwapsInternal = [.. ColorSwapsInternal],
-            BoneOverrides = new([.. BoneOverrides]), // clone
+            UseRightGauntlet = gfxType.UseRightGauntlet,
+            UseRightKatar = gfxType.UseRightKatar,
+            HideRightPistol2D = gfxType.HideRightPistol2D,
+            UseTrueLeftRightTorso = gfxType.UseTrueLeftRightTorso,
+            CustomArtsInternal = [.. BaseCustomArts, .. gfxType.CustomArts],
+            ColorSwapsInternal = [.. BaseColorSwaps, .. gfxType.ColorSwaps],
+            // TODO: it seems like the game doesn't actually copy this over??
+            BoneOverride = new(BoneOverride), // clone
         };
+
+        if (!noSwapArt)
+        {
+            gfxResult.CustomArtsInternal.AddRange(SwapCustomArts);
+        }
+
+        if (headSwap && HeadCustomArt is not null)
+        {
+            gfxResult.CustomArtsInternal.Add(HeadCustomArt);
+        }
+
+        gfxResult.CustomArtsInternal.Add(CapeCustomArt ?? NoCapeCustomArt);
 
         /*
         There's probably some mistake in this code
