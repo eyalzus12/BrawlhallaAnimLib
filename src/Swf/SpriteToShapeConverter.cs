@@ -1,16 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using SwfLib.Tags;
 using SwfLib.Tags.ShapeTags;
+using SwfLib.Tags.TextTags;
 using BrawlhallaAnimLib.Bones;
 using BrawlhallaAnimLib.Math;
-using SwfLib.Tags.TextTags;
 
 namespace BrawlhallaAnimLib.Swf;
 
 public static class SpriteToShapeConverter
 {
-    public static BoneShape[]? ConvertToShapes(ILoader loader, BoneSprite boneSprite)
+    public static async Task<BoneShape[]> ConvertToShapes(ILoader loader, BoneSprite boneSprite)
     {
         string swfPath = boneSprite.SwfFilePath;
 
@@ -19,14 +20,15 @@ public static class SpriteToShapeConverter
         if (boneSprite is BoneSpriteWithName boneSpriteWithName)
         {
             spriteName = boneSpriteWithName.SpriteName;
-            if (!loader.LoadSwf(swfPath))
-                return null;
 
-            if (!loader.TryGetSymbolId(swfPath, spriteName, out spriteId))
+            ushort? temp = await loader.GetSymbolId(swfPath, spriteName);
+            if (temp is null)
             {
-                return [];
                 //throw new ArgumentException($"Sprite {spriteName} not found in {swfPath}");
+                return [];
             }
+
+            spriteId = temp.Value;
         }
         else if (boneSprite is BoneSpriteWithId boneSpriteWithId)
         {
@@ -38,10 +40,11 @@ public static class SpriteToShapeConverter
             throw new ArgumentException($"Unknown bone sprite type {boneSprite.GetType()}");
         }
 
-        if (!loader.TryGetTag(swfPath, spriteId, out SwfTagBase? tag))
+        SwfTagBase? tag = await loader.GetTag(swfPath, spriteId);
+        if (tag is null)
         {
-            return [];
             //throw new ArgumentException($"Tag id {spriteId} for sprite {spriteName} not found in {swfPath}");
+            return [];
         }
 
         if (tag is not DefineSpriteTag spriteTag)
@@ -58,8 +61,7 @@ public static class SpriteToShapeConverter
         SwfSpriteFrame spriteFrame = sprite.Frames[clampedFrame];
         foreach ((ushort depth, SwfSpriteFrameLayer layer) in spriteFrame.Layers)
         {
-            if (!loader.TryGetTag(swfPath, layer.CharacterId, out SwfTagBase? layerTag))
-                throw new ArgumentException($"Sprite {spriteName} has invalid character id {layer.CharacterId} at depth {depth} in {swfPath}");
+            SwfTagBase? layerTag = await loader.GetTag(swfPath, layer.CharacterId) ?? throw new ArgumentException($"Sprite {spriteName} has invalid character id {layer.CharacterId} at depth {depth} in {swfPath}");
 
             Transform2D layerTransform = MathUtils.SwfMatrixToTransform(layer.Matrix);
             Transform2D childTransform = boneSprite.Transform * layerTransform;
@@ -89,14 +91,13 @@ public static class SpriteToShapeConverter
                     ColorSwapDict = null!, // not used
                     Opacity = 0, // nnot used
                 };
-                BoneShape[]? shapes = ConvertToShapes(loader, childSprite);
-                if (shapes is null) return null;
+                BoneShape[] shapes = await ConvertToShapes(loader, childSprite);
                 result.AddRange(shapes);
             }
             else if (layerTag is DefineTextBaseTag text)
             {
                 // we don't handle text because all DefineText in the game are empty strings
-                // how tf did this happen
+                // they are used for master chief cannon sigs for some reason
             }
             else
             {

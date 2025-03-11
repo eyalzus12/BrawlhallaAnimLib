@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using SwfLib.Tags;
 using BrawlhallaAnimLib.Bones;
 using BrawlhallaAnimLib.Gfx;
@@ -21,51 +22,51 @@ public static class AnimationBuilder
     }
 
     // null if not loaded yet
-    public static long? GetAnimFrameCount(ILoader loader, string animFile, string animClass, string animName)
+    public static async Task<long> GetAnimFrameCount(ILoader loader, string animFile, string animClass, string animName)
     {
         if (IsAnmAnimation(animFile, animClass))
         {
-            if (!loader.TryGetAnmClass($"{animFile}/{animClass}", out IAnmClass? anmClass))
-                throw new ArgumentException($"Could not find anim class {animClass} in {animFile}. Make sure you loaded it.");
+            IAnmClass? anmClass = await loader.GetAnmClass($"{animFile}/{animClass}") ?? throw new ArgumentException($"Could not find anim class {animClass} in {animFile}. Make sure you loaded it.");
+
             if (!anmClass.TryGetAnimation(animName, out IAnmAnimation? animation))
                 throw new ArgumentException($"No animation {animName} in anim class {animClass}");
+
             return animation.Frames.Length;
         }
         else
         {
-            if (!loader.LoadSwf(animFile))
-                return null;
-            if (!loader.TryGetSymbolId(animFile, animClass, out ushort spriteId))
-                throw new ArgumentException($"Sprite {animClass} not found in {animFile}");
-            if (!loader.TryGetTag(animFile, spriteId, out SwfTagBase? tag))
-                throw new ArgumentException($"Tag id {spriteId} for sprite {animClass} not found in {animFile}");
+            ushort spriteId = await loader.GetSymbolId(animFile, animClass) ?? throw new ArgumentException($"Sprite {animClass} not found in {animFile}");
+            SwfTagBase? tag = await loader.GetTag(animFile, spriteId) ?? throw new ArgumentException($"Tag id {spriteId} for sprite {animClass} not found in {animFile}");
+
             if (tag is not DefineSpriteTag sprite)
                 throw new ArgumentException($"Tag id {spriteId} does not point to a sprite in {animFile}");
+
             return sprite.FramesCount;
         }
     }
 
     // null if not loaded yet
-    public static BoneSpriteWithName[]? BuildAnim(ILoader loader, IGfxType gfx, string animName, long frame, Transform2D transform, bool isTooltip = false)
+    public static async Task<BoneSpriteWithName[]> BuildAnim(ILoader loader, IGfxType gfx, string animName, long frame, Transform2D transform, bool isTooltip = false)
     {
-        transform *= Transform2D.CreateScale(gfx.AnimScale, gfx.AnimScale);
+        Transform2D scaleTransform = Transform2D.CreateScale(gfx.AnimScale, gfx.AnimScale);
+        Transform2D realTransform = transform * scaleTransform;
 
         // anm animation
         if (IsAnmAnimation(gfx.AnimFile, gfx.AnimClass))
         {
-            if (!loader.TryGetAnmClass($"{gfx.AnimFile}/{gfx.AnimClass}", out IAnmClass? anmClass))
-                throw new ArgumentException($"Could not find anim class {gfx.AnimClass} in {gfx.AnimFile}. Make sure you loaded it.");
+            IAnmClass? anmClass = await loader.GetAnmClass($"{gfx.AnimFile}/{gfx.AnimClass}") ?? throw new ArgumentException($"Could not find anim class {gfx.AnimClass} in {gfx.AnimFile}. Make sure you loaded it.");
+
             if (!anmClass.TryGetAnimation(animName, out IAnmAnimation? animation))
                 throw new ArgumentException($"No animation {animName} in anim class {gfx.AnimClass}");
             if (animation.Frames.Length == 0)
                 throw new ArgumentException($"Animation {animName} has no frames");
+
             long frameIndex = MathUtils.SafeMod(frame + animation.BaseStart, animation.Frames.Length);
             IAnmFrame anmFrame = animation.Frames[frameIndex];
 
-            List<BoneInstance>? bones = GetBoneInstances(loader, anmFrame.Bones, gfx);
-            if (bones is null) return null;
+            List<BoneInstance> bones = await GetBoneInstances(loader, anmFrame.Bones, gfx);
 
-            SetAsymBonesVisibility(bones, gfx, transform.ScaleX * transform.ScaleY < 0, isTooltip);
+            SetAsymBonesVisibility(bones, gfx, realTransform.ScaleX * realTransform.ScaleY < 0, isTooltip);
 
             List<BoneSpriteWithName> result = [];
             foreach (BoneInstance instance in bones)
@@ -82,13 +83,12 @@ public static class AnimationBuilder
                     SpriteName = instance.SpriteName,
                     Frame = bone.Frame - 1,
                     AnimScale = gfx.AnimScale,
-                    Transform = transform * boneTransform,
+                    Transform = scaleTransform * boneTransform,
                     Tint = gfx.Tint,
                     Opacity = bone.Opacity,
                 };
 
-                if (!BuildColorMap(loader, boneSprite, instance, gfx.ColorSwaps))
-                    return null;
+                await BuildColorMap(loader, boneSprite, instance, gfx.ColorSwaps);
 
                 result.Add(boneSprite);
             }
@@ -111,11 +111,11 @@ public static class AnimationBuilder
                 SpriteName = gfx.AnimClass,
                 Frame = frame,
                 AnimScale = gfx.AnimScale,
-                Transform = transform,
+                Transform = scaleTransform,
                 Tint = gfx.Tint,
                 Opacity = 1,
             };
-            if (!BuildColorMap(loader, boneSprite, fakeInstance, gfx.ColorSwaps)) return null;
+            await BuildColorMap(loader, boneSprite, fakeInstance, gfx.ColorSwaps);
 
             return [boneSprite];
         }
@@ -132,18 +132,14 @@ public static class AnimationBuilder
         BoneTypeEnum._HAIR,
     ];
 
-    private static List<BoneInstance>? GetBoneInstances(ILoader loader, IAnmBone[] bones, IGfxType gfx)
+    private static async Task<List<BoneInstance>> GetBoneInstances(ILoader loader, IAnmBone[] bones, IGfxType gfx)
     {
-        if (!loader.LoadBoneTypes())
-            return null;
-
         List<BoneInstance> instances = [];
         bool otherHand = false;
         string handBoneName = "";
         foreach (IAnmBone bone in bones)
         {
-            if (!loader.TryGetBoneName(bone.Id, out string? boneName))
-                throw new ArgumentException($"Could not find bone name for id {bone.Id}");
+            string boneName = await loader.GetBoneName(bone.Id) ?? throw new ArgumentException($"Could not find bone name for id {bone.Id}");
 
             BoneType? boneType;
             if (BoneDatabase.BoneTypeDict.TryGetValue(boneName, out BoneType boneType_))
@@ -193,8 +189,7 @@ public static class AnimationBuilder
                 handBoneName = "";
             }
 
-            if (!FindCustomArt(loader, boneName, finalBoneName, gfx.CustomArts, isHand ? right : mirrored, out ICustomArt? customArt))
-                return null;
+            ICustomArt? customArt = await FindCustomArt(loader, boneName, finalBoneName, gfx.CustomArts, isHand ? right : mirrored);
 
             string customArtSuffix = customArt is not null ? $"_{customArt.Name}" : "";
             bool visible = boneType switch
@@ -216,9 +211,9 @@ public static class AnimationBuilder
 
             string trueSpriteName = finalBoneName + customArtSuffix;
             string trueFilePath = customArt?.FileName ?? gfx.AnimFile;
-            if (!loader.LoadBoneSources())
-                return null;
-            if (loader.TryGetBoneFilePath(trueSpriteName, out string? boneSource))
+
+            string? boneSource = await loader.GetBoneFilePath(trueSpriteName);
+            if (boneSource is not null)
                 trueFilePath = boneSource;
 
             if (!loader.SwfExists(trueFilePath))
@@ -236,11 +231,8 @@ public static class AnimationBuilder
         return instances;
     }
 
-    // returns false if swf not loaded yet
-    private static bool FindCustomArt(ILoader loader, string ogBoneName, string boneName, IEnumerable<ICustomArt> customArts, bool right, out ICustomArt? chosen)
+    private static async Task<ICustomArt?> FindCustomArt(ILoader loader, string ogBoneName, string boneName, IEnumerable<ICustomArt> customArts, bool right)
     {
-        chosen = null;
-
         ArtTypeEnum artType = BoneDatabase.ArtTypeDict.GetValueOrDefault(ogBoneName, ArtTypeEnum.None);
         foreach (ICustomArt ca in customArts.Reverse())
         {
@@ -251,24 +243,18 @@ public static class AnimationBuilder
                 string truePath = ca.FileName;
                 string newBoneName = boneName + '_' + ca.Name;
 
-                if (!loader.LoadBoneSources())
-                    return false;
-                if (loader.TryGetBoneFilePath(newBoneName, out string? boneSource))
+                string? boneSource = await loader.GetBoneFilePath(newBoneName);
+                if (boneSource is not null)
                     truePath = boneSource;
 
                 if (!loader.SwfExists(truePath))
                     continue;
 
-                if (!loader.LoadSwf(truePath))
-                    return false;
-                if (loader.TryGetSymbolId(truePath, newBoneName, out _))
-                {
-                    chosen = ca;
-                    return true;
-                }
+                if (await loader.GetSymbolId(truePath, newBoneName) is not null)
+                    return ca;
             }
         }
-        return true;
+        return null;
     }
 
     private static void SetAsymBonesVisibility(List<BoneInstance> bones, IGfxType gfx, bool spriteMirrored, bool isTooltip = false)
@@ -407,7 +393,7 @@ public static class AnimationBuilder
         }
     }
 
-    private static bool BuildColorMap(ILoader loader, BoneSpriteWithName sprite, BoneInstance instance, IEnumerable<IColorSwap> colorSwaps)
+    private static async Task BuildColorMap(ILoader loader, BoneSpriteWithName sprite, BoneInstance instance, IEnumerable<IColorSwap> colorSwaps)
     {
         // the .a checks only tell us if we CAN swap. they do no filtering.
 
@@ -425,11 +411,10 @@ public static class AnimationBuilder
             {
                 // get .a
                 string boneSwfPath = sprite.SwfFilePath;
-                if (!loader.LoadSwf(boneSwfPath))
-                    return false;
+                uint[]? a = await loader.GetScriptAVar(boneSwfPath, instance.SpriteName);
                 // no .a
-                if (!loader.TryGetScriptAVar(boneSwfPath, instance.SpriteName, out uint[]? a))
-                    return true;
+                if (a is null || a.Length == 0)
+                    return;
                 aSet = [.. a];
             }
 
@@ -440,7 +425,7 @@ public static class AnimationBuilder
             canColorSwap = true;
             break;
         }
-        if (!canColorSwap) return true;
+        if (!canColorSwap) return;
 
         // now we create the actual color swap dict
 
@@ -462,7 +447,5 @@ public static class AnimationBuilder
                 }
             }
         }
-
-        return true;
     }
 }
