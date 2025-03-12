@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using SwfLib.Tags;
 using SwfLib.Tags.ShapeTags;
@@ -55,56 +56,66 @@ public static class SpriteToShapeConverter
         if (sprite.Frames.Length == 0)
             throw new ArgumentException($"Sprite {spriteName} has no frames");
 
-        List<BoneShape> result = [];
+        List<Task<BoneShape[]>> tasks = [];
 
         long clampedFrame = MathUtils.SafeMod(boneSprite.Frame, sprite.Frames.Length);
         SwfSpriteFrame spriteFrame = sprite.Frames[clampedFrame];
         foreach ((ushort depth, SwfSpriteFrameLayer layer) in spriteFrame.Layers)
         {
-            SwfTagBase? layerTag = await loader.GetTag(swfPath, layer.CharacterId) ?? throw new ArgumentException($"Sprite {spriteName} has invalid character id {layer.CharacterId} at depth {depth} in {swfPath}");
-
-            Transform2D layerTransform = MathUtils.SwfMatrixToTransform(layer.Matrix);
-            Transform2D childTransform = boneSprite.Transform * layerTransform;
-
-            // is a shape
-            if (layerTag is ShapeBaseTag shapeTag)
+            async Task<BoneShape[]> local()
             {
-                result.Add(new()
+                SwfTagBase? layerTag = await loader.GetTag(swfPath, layer.CharacterId) ?? throw new ArgumentException($"Sprite {spriteName} has invalid character id {layer.CharacterId} at depth {depth} in {swfPath}");
+
+                Transform2D layerTransform = MathUtils.SwfMatrixToTransform(layer.Matrix);
+                Transform2D childTransform = boneSprite.Transform * layerTransform;
+
+                // is a shape
+                if (layerTag is ShapeBaseTag shapeTag)
                 {
-                    ShapeId = shapeTag.ShapeID,
-                    Transform = childTransform,
-                    Tint = boneSprite.Tint,
-                });
-            }
-            else if (layerTag is DefineSpriteTag childSpriteTag)
-            {
-                ushort childSpriteId = childSpriteTag.SpriteID;
-                BoneSpriteWithId childSprite = new()
-                {
-                    SwfFilePath = swfPath,
-                    SpriteId = childSpriteId,
-                    Frame = boneSprite.Frame + layer.FrameOffset,
-                    Transform = childTransform,
-                    Tint = boneSprite.Tint,
+                    BoneShape shape = new()
+                    {
+                        ShapeId = shapeTag.ShapeID,
+                        Transform = childTransform,
+                        Tint = boneSprite.Tint,
+                    };
 
-                    AnimScale = 0, // not used
-                    ColorSwapDict = null!, // not used
-                    Opacity = 0, // nnot used
-                };
-                BoneShape[] shapes = await ConvertToShapes(loader, childSprite);
-                result.AddRange(shapes);
+                    return [shape];
+                }
+                else if (layerTag is DefineSpriteTag childSpriteTag)
+                {
+                    ushort childSpriteId = childSpriteTag.SpriteID;
+                    BoneSpriteWithId childSprite = new()
+                    {
+                        SwfFilePath = swfPath,
+                        SpriteId = childSpriteId,
+                        Frame = boneSprite.Frame + layer.FrameOffset,
+                        Transform = childTransform,
+                        Tint = boneSprite.Tint,
+
+                        AnimScale = 0, // not used
+                        ColorSwapDict = null!, // not used
+                        Opacity = 0, // nnot used
+                    };
+                    return await ConvertToShapes(loader, childSprite);
+                }
+                else if (layerTag is DefineTextBaseTag text)
+                {
+                    // we don't handle text because all DefineText in the game are empty strings
+                    // they are used for master chief cannon sigs for some reason
+                }
+                else
+                {
+                    throw new ArgumentException($"Sprite {spriteName} has unimplemented tag type {layerTag.TagType} at depth {depth} in {swfPath}");
+                }
+
+                return [];
             }
-            else if (layerTag is DefineTextBaseTag text)
-            {
-                // we don't handle text because all DefineText in the game are empty strings
-                // they are used for master chief cannon sigs for some reason
-            }
-            else
-            {
-                throw new ArgumentException($"Sprite {spriteName} has unimplemented tag type {layerTag.TagType} at depth {depth} in {swfPath}");
-            }
+
+            tasks.Add(local());
         }
 
-        return [.. result];
+        BoneShape[] result = [.. (await Task.WhenAll(tasks)).SelectMany(x => x)];
+
+        return result;
     }
 }

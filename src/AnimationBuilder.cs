@@ -45,8 +45,7 @@ public static class AnimationBuilder
         }
     }
 
-    // null if not loaded yet
-    public static async Task<BoneSpriteWithName[]> BuildAnim(ILoader loader, IGfxType gfx, string animName, long frame, Transform2D transform, bool isTooltip = false)
+    public static async IAsyncEnumerable<BoneSpriteWithName> BuildAnim(ILoader loader, IGfxType gfx, string animName, long frame, Transform2D transform, bool isTooltip = false)
     {
         Transform2D scaleTransform = Transform2D.CreateScale(gfx.AnimScale, gfx.AnimScale);
         Transform2D realTransform = transform * scaleTransform;
@@ -64,12 +63,10 @@ public static class AnimationBuilder
             long frameIndex = MathUtils.SafeMod(frame + animation.BaseStart, animation.Frames.Length);
             IAnmFrame anmFrame = animation.Frames[frameIndex];
 
-            List<BoneInstance> bones = await GetBoneInstances(loader, anmFrame.Bones, gfx);
+            IAsyncEnumerable<BoneInstance> bones = GetBoneInstances(loader, anmFrame.Bones, gfx);
+            bones = SetAsymBonesVisibility(bones, gfx, realTransform.ScaleX * realTransform.ScaleY < 0, isTooltip);
 
-            SetAsymBonesVisibility(bones, gfx, realTransform.ScaleX * realTransform.ScaleY < 0, isTooltip);
-
-            List<BoneSpriteWithName> result = [];
-            foreach (BoneInstance instance in bones)
+            await foreach (BoneInstance instance in bones)
             {
                 if (!instance.Visible)
                     continue;
@@ -90,9 +87,8 @@ public static class AnimationBuilder
 
                 await BuildColorMap(loader, boneSprite, instance, gfx.ColorSwaps);
 
-                result.Add(boneSprite);
+                yield return boneSprite;
             }
-            return [.. result];
         }
         // swf animation
         else
@@ -117,7 +113,7 @@ public static class AnimationBuilder
             };
             await BuildColorMap(loader, boneSprite, fakeInstance, gfx.ColorSwaps);
 
-            return [boneSprite];
+            yield return boneSprite;
         }
     }
 
@@ -132,9 +128,9 @@ public static class AnimationBuilder
         BoneTypeEnum._HAIR,
     ];
 
-    private static async Task<List<BoneInstance>> GetBoneInstances(ILoader loader, IAnmBone[] bones, IGfxType gfx)
+    // cannot be Task.WhenAll'ed because of otherHand and handBoneName
+    private static async IAsyncEnumerable<BoneInstance> GetBoneInstances(ILoader loader, IAnmBone[] bones, IGfxType gfx)
     {
-        List<BoneInstance> instances = [];
         bool otherHand = false;
         string handBoneName = "";
         foreach (IAnmBone bone in bones)
@@ -219,16 +215,15 @@ public static class AnimationBuilder
             if (!loader.SwfExists(trueFilePath))
                 continue;
 
-            instances.Add(new()
+            yield return new()
             {
                 FilePath = trueFilePath,
                 SpriteName = trueSpriteName,
                 OgBoneName = boneName,
                 Bone = bone,
                 Visible = visible,
-            });
+            };
         }
-        return instances;
     }
 
     private static async Task<ICustomArt?> FindCustomArt(ILoader loader, string ogBoneName, string boneName, IEnumerable<ICustomArt> customArts, bool right)
@@ -257,7 +252,8 @@ public static class AnimationBuilder
         return null;
     }
 
-    private static void SetAsymBonesVisibility(List<BoneInstance> bones, IGfxType gfx, bool spriteMirrored, bool isTooltip = false)
+    // cannot be Task.WhenAll'ed because we have to read and manipulate following bones
+    private static async IAsyncEnumerable<BoneInstance> SetAsymBonesVisibility(IAsyncEnumerable<BoneInstance> bones, IGfxType gfx, bool spriteMirrored, bool isTooltip = false)
     {
         bool useRightTorso = gfx.UseRightTorso;
         bool useTrueLeftRightTorso = gfx.UseTrueLeftRightTorso;
@@ -276,9 +272,10 @@ public static class AnimationBuilder
         bool useRightLeg1 = gfx.UseRightLeg1;
         bool useRightLeg1Right = gfx.UseRightLeg1;
         bool hideRightPistol2D = isTooltip && gfx.HidePaperDollRightPistol && gfx.HideRightPistol2D;
-        for (int i = 0; i < bones.Count; ++i)
+
+        int i = 0;
+        await foreach ((BoneInstance instance, BoneInstance? next) in bones.Pairs())
         {
-            BoneInstance instance = bones[i];
             bool mirrored = false;
             bool hand = false;
             if (BoneDatabase.BoneTypeDict.TryGetValue(instance.OgBoneName, out BoneType boneType))
@@ -293,10 +290,10 @@ public static class AnimationBuilder
 
             void doVisibilitySwap()
             {
-                if (i < bones.Count - 1)
+                if (next is not null)
                 {
-                    bones[i].Visible = mirrored == spriteMirrored;
-                    bones[i + 1].Visible = mirrored != spriteMirrored;
+                    instance.Visible = mirrored == spriteMirrored;
+                    next.Visible = mirrored != spriteMirrored;
                 }
             }
 
@@ -352,7 +349,7 @@ public static class AnimationBuilder
             }
             else if (trueLeftRightHandsUses > 0 && hand)
             {
-                bones[i].Visible = (i % 2 == 0) ? !spriteMirrored : spriteMirrored;
+                instance.Visible = (i % 2 == 0) ? !spriteMirrored : spriteMirrored;
                 trueLeftRightHandsUses--;
             }
             else if (useRightShoulder1 && instance.OgBoneName == "a_Shoulder1")
@@ -383,13 +380,16 @@ public static class AnimationBuilder
             else if (hideRightPistol2D)
             {
                 bool rightPistol = instance.OgBoneName == "a_WeaponPistolRight";
-                bool firstPistol = instance.OgBoneName == "a_WeaponPistol" && bones[i + 1].OgBoneName == "a_WeaponPistol";
+                bool firstPistol = next is not null && instance.OgBoneName == "a_WeaponPistol" && next.OgBoneName == "a_WeaponPistol";
                 if (rightPistol || firstPistol)
                 {
                     instance.Visible = false;
                     hideRightPistol2D = false;
                 }
             }
+
+            yield return instance;
+            ++i;
         }
     }
 
@@ -407,6 +407,7 @@ public static class AnimationBuilder
             if (colorSwap.ArtType != ArtTypeEnum.None && colorSwap.ArtType != artType)
                 continue;
 
+            // lazy compute
             if (aSet is null)
             {
                 // get .a
@@ -447,5 +448,20 @@ public static class AnimationBuilder
                 }
             }
         }
+    }
+
+    private static async IAsyncEnumerable<(T, T?)> Pairs<T>(this IAsyncEnumerable<T> enumerable)
+    {
+        IAsyncEnumerator<T> enumerator = enumerable.GetAsyncEnumerator();
+        if (!await enumerator.MoveNextAsync())
+            yield break;
+        T prev = enumerator.Current;
+        while (await enumerator.MoveNextAsync())
+        {
+            T current = enumerator.Current;
+            yield return (prev, current);
+            prev = current;
+        }
+        yield return (prev, default);
     }
 }
