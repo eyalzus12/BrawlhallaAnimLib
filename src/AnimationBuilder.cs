@@ -80,7 +80,7 @@ public static class AnimationBuilder
                     SpriteName = instance.SpriteName,
                     Frame = bone.Frame - 1,
                     AnimScale = gfx.AnimScale,
-                    Transform = scaleTransform * boneTransform,
+                    Transform = realTransform * boneTransform,
                     Tint = gfx.Tint,
                     Opacity = bone.Opacity,
                 };
