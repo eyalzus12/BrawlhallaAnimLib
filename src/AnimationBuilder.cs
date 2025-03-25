@@ -60,7 +60,7 @@ public static class AnimationBuilder
             if (animation.Frames.Length == 0)
                 throw new ArgumentException($"Animation {animName} has no frames");
 
-            long frameIndex = MathUtils.SafeMod(frame + animation.BaseStart, animation.Frames.Length);
+            long frameIndex = MathUtils.SafeMod(frame, animation.Frames.Length);
             IAnmFrame anmFrame = animation.Frames[frameIndex];
 
             IAsyncEnumerable<BoneInstance> bones = GetBoneInstances(loader, anmFrame.Bones, gfx);
@@ -129,7 +129,7 @@ public static class AnimationBuilder
     ];
 
     // cannot be Task.WhenAll'ed because of otherHand and handBoneName
-    private static async IAsyncEnumerable<BoneInstance> GetBoneInstances(ILoader loader, IAnmBone[] bones, IGfxType gfx)
+    private static async IAsyncEnumerable<BoneInstance> GetBoneInstances(ILoader loader, IEnumerable<IAnmBone> bones, IGfxType gfx)
     {
         bool otherHand = false;
         string handBoneName = "";

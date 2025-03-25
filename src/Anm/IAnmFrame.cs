@@ -1,6 +1,8 @@
+using System.Collections.Generic;
+
 namespace BrawlhallaAnimLib.Anm;
 
 public interface IAnmFrame
 {
-    IAnmBone[] Bones { get; }
+    IEnumerable<IAnmBone> Bones { get; }
 }
