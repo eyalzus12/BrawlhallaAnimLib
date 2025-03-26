@@ -15,7 +15,7 @@ public sealed class CostumeTypesGfx
         Type = ArtTypeEnum.Costume,
     };
 
-    internal string CostumeName { get; } = null!;
+    internal string CostumeName { get; }
     internal uint AsymmetrySwapFlags { get; } = 0;
     internal bool UseRightTorso { get; } = false;
     internal bool UseRightJaw { get; } = false;
@@ -156,6 +156,8 @@ public sealed class CostumeTypesGfx
                 }
             }
         }
+
+        if (CostumeName is null) throw new ArgumentException("Missing CostumeName");
     }
 
     public IGfxType ToGfxType(IGfxType gfxType, IColorSchemeType? colorScheme = null, IColorExceptionTypes? colorExceptions = null, bool headSwap = false, bool noSwapArt = false)

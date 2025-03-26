@@ -26,7 +26,7 @@ public sealed class WeaponSkinTypesGfx
         (ColorSchemeSwapEnum.HandsSkinDk, 0xFFCC99, 0),
     ];
 
-    internal string WeaponSkinName { get; } = null!;
+    internal string WeaponSkinName { get; }
     internal uint AsymmetrySwapFlags { get; } = 0;
     internal bool UseRightGauntlet { get; } = false;
     internal bool UseRightKatar { get; } = false;
@@ -41,7 +41,6 @@ public sealed class WeaponSkinTypesGfx
     internal uint AttackFxLt_Color { get; } = 0;
     internal ColorSchemeSwapEnum? AttackFxDk_Enum { get; } = null;
     internal uint AttackFxDk_Color { get; } = 0;
-
 
     public WeaponSkinTypesGfx(ICsvRow row, ICsvReader costumeTypesReader)
     {
@@ -155,6 +154,8 @@ public sealed class WeaponSkinTypesGfx
             AttackGfxOverride.* - used by lightsabers
             */
         }
+
+        if (WeaponSkinName is null) throw new ArgumentException("Missing WeaponSkinName");
     }
 
     public IGfxType ToGfxType(IGfxType gfxType, IColorSchemeType? colorScheme = null, IColorExceptionTypes? colorExceptions = null, CostumeTypesGfx? costumeType = null)
