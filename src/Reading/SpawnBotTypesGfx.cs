@@ -22,7 +22,7 @@ public sealed class SpawnBotTypesGfx
         {
             string key = child.Name.LocalName;
             string value = child.Value;
-            if (key == "Gfx")
+            if (key == "GfxType")
             {
                 foreach (XElement prop in child.Elements())
                 {
@@ -41,7 +41,7 @@ public sealed class SpawnBotTypesGfx
                     }
                     else if (propKey.StartsWith("CustomArt"))
                     {
-                        CustomArts.Add(ParserUtils.ParseCustomArt(propValue, true, ArtTypeEnum.Companion));
+                        CustomArts.Add(ParserUtils.ParseCustomArt(propValue, true, ArtTypeEnum.Bot));
                     }
                     else if (propKey == "AnimFile")
                     {
@@ -59,7 +59,7 @@ public sealed class SpawnBotTypesGfx
             }
         }
 
-        if (AnimClass is null) throw new ArgumentException("Missing AnimClass");
+        if (AnimClass is null) throw new ArgumentException(element.ToString());
         if (AnimFile is null) throw new ArgumentException("Missing AnimFile");
     }
 
@@ -75,6 +75,16 @@ public sealed class SpawnBotTypesGfx
             ColorSwapsInternal = [.. ColorSwaps],
         };
 
+        return gfxResult;
+    }
+
+    public IGfxType ToGfxType(IGfxType gfxType)
+    {
+        InternalGfxImpl gfxResult = new(gfxType)
+        {
+            UseTrueLeftRightTorso = UseTrueLeftRightTorso
+        };
+        gfxResult.CustomArtsInternal.AddRange(CustomArts);
         return gfxResult;
     }
 }

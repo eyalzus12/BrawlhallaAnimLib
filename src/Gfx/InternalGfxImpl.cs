@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BrawlhallaAnimLib.Gfx;
 
@@ -36,4 +37,34 @@ internal sealed class InternalGfxImpl : IGfxType
 
     internal Dictionary<string, string> BoneOverride { get; init; } = [];
     IReadOnlyDictionary<string, string> IGfxType.BoneOverride => BoneOverride;
+
+    internal InternalGfxImpl() { }
+
+    [SetsRequiredMembers]
+    internal InternalGfxImpl(IGfxType gfx)
+    {
+        AnimFile = gfx.AnimFile;
+        AnimClass = gfx.AnimClass;
+        AnimScale = gfx.AnimScale;
+        Tint = gfx.Tint;
+        CustomArtsInternal = [.. gfx.CustomArts];
+        ColorSwapsInternal = [.. gfx.ColorSwaps];
+        UseRightTorso = gfx.UseRightTorso;
+        UseRightJaw = gfx.UseRightJaw;
+        UseRightEyes = gfx.UseRightEyes;
+        UseRightMouth = gfx.UseRightMouth;
+        UseRightHair = gfx.UseRightHair;
+        UseRightForearm = gfx.UseRightForearm;
+        UseRightShoulder1 = gfx.UseRightShoulder1;
+        UseRightLeg1 = gfx.UseRightLeg1;
+        UseRightShin = gfx.UseRightShin;
+        UseTrueLeftRightHands = gfx.UseTrueLeftRightHands;
+        HidePaperDollRightPistol = gfx.HidePaperDollRightPistol;
+        UseRightGauntlet = gfx.UseRightGauntlet;
+        UseRightKatar = gfx.UseRightKatar;
+        HideRightPistol2D = gfx.HideRightPistol2D;
+        UseTrueLeftRightTorso = gfx.UseTrueLeftRightTorso;
+        AsymmetrySwapFlags = gfx.AsymmetrySwapFlags;
+        BoneOverride = new(gfx.BoneOverride);
+    }
 }

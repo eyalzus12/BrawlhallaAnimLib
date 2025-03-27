@@ -22,7 +22,7 @@ public sealed class CompanionTypesGfx
         {
             string key = child.Name.LocalName;
             string value = child.Value;
-            if (key == "Gfx")
+            if (key == "GfxType")
             {
                 foreach (XElement prop in child.Elements())
                 {
