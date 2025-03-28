@@ -161,32 +161,14 @@ public sealed class WeaponSkinTypesGfx
     public IGfxType ToGfxType(IGfxType gfxType, IColorSchemeType? colorScheme = null, IColorExceptionTypes? colorExceptions = null, CostumeTypesGfx? costumeType = null)
     {
         // weapon skin types only modify the existing gfx
-        InternalGfxImpl gfxResult = new()
+        InternalGfxImpl gfxResult = new(gfxType)
         {
-            AnimFile = gfxType.AnimFile,
-            AnimClass = gfxType.AnimClass,
-            AnimScale = gfxType.AnimScale,
-            Tint = gfxType.Tint,
-            AsymmetrySwapFlags = AsymmetrySwapFlags | gfxType.AsymmetrySwapFlags,
-            UseRightTorso = gfxType.UseRightTorso,
-            UseRightJaw = gfxType.UseRightJaw,
-            UseRightEyes = gfxType.UseRightEyes,
-            UseRightMouth = gfxType.UseRightMouth,
-            UseRightHair = gfxType.UseRightHair,
-            UseRightForearm = gfxType.UseRightForearm,
-            UseRightShoulder1 = gfxType.UseRightShoulder1,
-            UseRightLeg1 = gfxType.UseRightLeg1,
-            UseRightShin = gfxType.UseRightShin,
-            UseTrueLeftRightHands = gfxType.UseTrueLeftRightHands,
-            HidePaperDollRightPistol = gfxType.HidePaperDollRightPistol,
-            CustomArtsInternal = [.. gfxType.CustomArts, .. BaseCustomArts],
-            ColorSwapsInternal = [.. gfxType.ColorSwaps],
-            BoneOverride = new(gfxType.BoneOverride),
             UseRightGauntlet = UseRightGauntlet,
             UseRightKatar = UseRightKatar,
             HideRightPistol2D = HideRightPistol2D,
-            UseTrueLeftRightTorso = gfxType.UseTrueLeftRightTorso,
         };
+        gfxResult.AsymmetrySwapFlags |= AsymmetrySwapFlags;
+        gfxResult.CustomArtsInternal.AddRange(BaseCustomArts);
 
         ColorSchemeSwapEnum[] swapTypesList = Enum.GetValues<ColorSchemeSwapEnum>();
         if (colorScheme is not null)

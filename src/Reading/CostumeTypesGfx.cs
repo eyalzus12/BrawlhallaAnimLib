@@ -162,13 +162,8 @@ public sealed class CostumeTypesGfx
 
     public IGfxType ToGfxType(IGfxType gfxType, IColorSchemeType? colorScheme = null, IColorExceptionTypes? colorExceptions = null, bool headSwap = false, bool noSwapArt = false)
     {
-        InternalGfxImpl gfxResult = new()
+        InternalGfxImpl gfxResult = new(gfxType)
         {
-            AnimFile = gfxType.AnimFile,
-            AnimClass = gfxType.AnimClass,
-            AnimScale = gfxType.AnimScale,
-            Tint = gfxType.Tint,
-            AsymmetrySwapFlags = gfxType.AsymmetrySwapFlags | AsymmetrySwapFlags,
             UseRightTorso = UseRightTorso,
             UseRightJaw = UseRightJaw,
             UseRightEyes = UseRightEyes,
@@ -180,15 +175,13 @@ public sealed class CostumeTypesGfx
             UseRightShin = UseRightShin,
             UseTrueLeftRightHands = UseTrueLeftRightHands,
             HidePaperDollRightPistol = HidePaperDollRightPistol,
-            UseRightGauntlet = gfxType.UseRightGauntlet,
-            UseRightKatar = gfxType.UseRightKatar,
-            HideRightPistol2D = gfxType.HideRightPistol2D,
-            UseTrueLeftRightTorso = gfxType.UseTrueLeftRightTorso,
+            // this is correct - the custom arts are prepended
             CustomArtsInternal = [.. BaseCustomArts, .. gfxType.CustomArts],
-            ColorSwapsInternal = [.. BaseColorSwaps, .. gfxType.ColorSwaps],
             // TODO: it seems like the game doesn't actually copy this over??
             BoneOverride = new(BoneOverride), // clone
         };
+        gfxResult.AsymmetrySwapFlags |= AsymmetrySwapFlags;
+        gfxResult.ColorSwapsInternal.AddRange(BaseColorSwaps);
 
         if (!noSwapArt)
         {
