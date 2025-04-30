@@ -12,7 +12,7 @@ namespace BrawlhallaAnimLib.Swf;
 
 public static class SpriteToShapeConverter
 {
-    public static async Task<BoneShape[]> ConvertToShapes(ILoader loader, BoneSprite boneSprite)
+    public static async ValueTask<BoneShape[]> ConvertToShapes(ILoader loader, BoneSprite boneSprite)
     {
         string swfPath = boneSprite.SwfFilePath;
 
@@ -94,12 +94,13 @@ public static class SpriteToShapeConverter
 
                         AnimScale = 0, // not used
                         ColorSwapDict = null!, // not used
-                        Opacity = 0, // nnot used
+                        Opacity = 0, // not used
                     };
                     return await ConvertToShapes(loader, childSprite);
                 }
                 else if (layerTag is DefineTextBaseTag text)
                 {
+                    return [];
                     // we don't handle text because all DefineText in the game are empty strings
                     // they are used for master chief cannon sigs for some reason
                 }
@@ -107,8 +108,6 @@ public static class SpriteToShapeConverter
                 {
                     throw new ArgumentException($"Sprite {spriteName} has unimplemented tag type {layerTag.TagType} at depth {depth} in {swfPath}");
                 }
-
-                return [];
             }
 
             tasks.Add(local());

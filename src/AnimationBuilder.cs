@@ -10,6 +10,14 @@ using BrawlhallaAnimLib.Anm;
 
 namespace BrawlhallaAnimLib;
 
+[Flags]
+public enum AnimationBuilderOptions
+{
+    None = 0,
+    WeaponTooltip = 1 << 0,
+    BigHeadMode = 1 << 1,
+}
+
 public static class AnimationBuilder
 {
     private static readonly string[] AnimClassPrefixes = ["a_Animation_EB_", "a__LootBox", "a__PodiumRig"];
@@ -21,8 +29,51 @@ public static class AnimationBuilder
             AnimClassPrefixes.Any(animClass.StartsWith);
     }
 
+    private static readonly HashSet<string> BigHeadBones = [
+        "a_Hair",
+        "a_HairBack",
+        "a_HairR",
+        "a_HairRBack",
+        "a_Jaw",
+        "a_JawR",
+        "a_Eyes",
+        "a_EyesAngry",
+        "a_EyesDown",
+        "a_EyesHit",
+        "a_EyesKO",
+        "a_EyesTurn",
+        "a_EyesR",
+        "a_EyesRAngry",
+        "a_EyesRDown",
+        "a_EyesRHit",
+        "a_EyesRKO",
+        "a_EyesRTurn",
+        "a_Mouth",
+        "a_MouthBlow",
+        "a_MouthGrowl",
+        "a_MouthHit",
+        "a_MouthKO",
+        "a_MouthSmile",
+        "a_MouthWarCry",
+        "a_MouthR",
+        "a_MouthRBlow",
+        "a_MouthRGrowl",
+        "a_MouthRHit",
+        "a_MouthRKO",
+        "a_MouthRSmile",
+        "a_MouthRWarCry",
+        "a_Nose",
+        "a_Accent",
+        "a_AccentAngry",
+        "a_AccentDown",
+        "a_AccentHit",
+        "a_AccentKO",
+        "a_AccentTurn",
+        "a_Helmet",
+    ];
+
     // null if not loaded yet
-    public static async Task<long> GetAnimFrameCount(ILoader loader, string animFile, string animClass, string animName)
+    public static async ValueTask<long> GetAnimFrameCount(ILoader loader, string animFile, string animClass, string animName)
     {
         if (IsAnmAnimation(animFile, animClass))
         {
@@ -45,7 +96,7 @@ public static class AnimationBuilder
         }
     }
 
-    public static async IAsyncEnumerable<BoneSpriteWithName> BuildAnim(ILoader loader, IGfxType gfx, string animName, long frame, Transform2D transform, bool isTooltip = false)
+    public static async IAsyncEnumerable<BoneSpriteWithName> BuildAnim(ILoader loader, IGfxType gfx, string animName, long frame, Transform2D transform, AnimationBuilderOptions options = AnimationBuilderOptions.None)
     {
         Transform2D scaleTransform = Transform2D.CreateScale(gfx.AnimScale, gfx.AnimScale);
         Transform2D realTransform = transform * scaleTransform;
@@ -63,13 +114,25 @@ public static class AnimationBuilder
             long frameIndex = MathUtils.SafeMod(frame, animation.Frames.Length);
             IAnmFrame anmFrame = animation.Frames[frameIndex];
 
+            bool isTooltip = options.HasFlag(AnimationBuilderOptions.WeaponTooltip);
             IAsyncEnumerable<BoneInstance> bones = GetBoneInstances(loader, anmFrame.Bones, gfx);
             bones = SetAsymBonesVisibility(bones, gfx, realTransform.ScaleX * realTransform.ScaleY < 0, isTooltip);
+
+            bool bigHeadMode = options.HasFlag(AnimationBuilderOptions.BigHeadMode);
 
             await foreach (BoneInstance instance in bones)
             {
                 if (!instance.Visible)
                     continue;
+
+                // apply big head mode
+                Transform2D bigHeadTransform = Transform2D.IDENTITY;
+                double animScale = gfx.AnimScale;
+                if (bigHeadMode && BigHeadBones.Contains(instance.OgBoneName))
+                {
+                    bigHeadTransform = Transform2D.CreateScale(2, 2);
+                    animScale *= 2;
+                }
 
                 IAnmBone bone = instance.Bone;
                 Transform2D boneTransform = new(bone.ScaleX, bone.RotateSkew1, bone.RotateSkew0, bone.ScaleY, bone.X, bone.Y);
@@ -79,8 +142,8 @@ public static class AnimationBuilder
                     SwfFilePath = instance.FilePath,
                     SpriteName = instance.SpriteName,
                     Frame = bone.Frame - 1,
-                    AnimScale = gfx.AnimScale,
-                    Transform = realTransform * boneTransform,
+                    AnimScale = animScale,
+                    Transform = realTransform * boneTransform * bigHeadTransform,
                     Tint = gfx.Tint,
                     Opacity = bone.Opacity,
                 };
@@ -226,7 +289,7 @@ public static class AnimationBuilder
         }
     }
 
-    private static async Task<ICustomArt?> FindCustomArt(ILoader loader, string ogBoneName, string boneName, IEnumerable<ICustomArt> customArts, bool right)
+    private static async ValueTask<ICustomArt?> FindCustomArt(ILoader loader, string ogBoneName, string boneName, IEnumerable<ICustomArt> customArts, bool right)
     {
         ArtTypeEnum artType = BoneDatabase.ArtTypeDict.GetValueOrDefault(ogBoneName, ArtTypeEnum.None);
         foreach (ICustomArt ca in customArts.Reverse())
@@ -393,7 +456,7 @@ public static class AnimationBuilder
         }
     }
 
-    private static async Task BuildColorMap(ILoader loader, BoneSpriteWithName sprite, BoneInstance instance, IEnumerable<IColorSwap> colorSwaps)
+    private static async ValueTask BuildColorMap(ILoader loader, BoneSpriteWithName sprite, BoneInstance instance, IEnumerable<IColorSwap> colorSwaps)
     {
         // the .a checks only tell us if we CAN swap. they do no filtering.
 

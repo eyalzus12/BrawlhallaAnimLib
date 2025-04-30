@@ -8,14 +8,14 @@ public interface ILoader
 {
     // swf
     bool SwfExists(string swfPath);
-    Task<ushort?> GetSymbolId(string swfPath, string symbolName);
-    Task<SwfTagBase?> GetTag(string swfPath, ushort tagId);
-    Task<uint[]?> GetScriptAVar(string swfPath, string spriteName);
+    ValueTask<ushort?> GetSymbolId(string swfPath, string symbolName);
+    ValueTask<SwfTagBase?> GetTag(string swfPath, ushort tagId);
+    ValueTask<uint[]?> GetScriptAVar(string swfPath, string spriteName);
 
     // anm
-    Task<IAnmClass?> GetAnmClass(string classIdentifier);
+    ValueTask<IAnmClass?> GetAnmClass(string classIdentifier);
 
     // bone types
-    Task<string?> GetBoneName(short boneId);
-    Task<string?> GetBoneFilePath(string boneName);
+    ValueTask<string?> GetBoneName(short boneId);
+    ValueTask<string?> GetBoneFilePath(string boneName);
 }
