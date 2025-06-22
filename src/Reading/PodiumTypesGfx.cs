@@ -2,7 +2,7 @@ using System;
 using System.Xml.Linq;
 using BrawlhallaAnimLib.Gfx;
 
-namespace BrawlhallaAnimLib.Reading;
+namespace BrawlhallaAnimLib.Reading.PodiumTypes;
 
 public enum PodiumTeamEnum
 {

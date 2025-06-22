@@ -5,7 +5,7 @@ using System.Xml.Linq;
 using BrawlhallaAnimLib.Bones;
 using BrawlhallaAnimLib.Gfx;
 
-namespace BrawlhallaAnimLib.Reading;
+namespace BrawlhallaAnimLib.Reading.SpawnBotTypes;
 
 public sealed class SpawnBotTypesGfx
 {
