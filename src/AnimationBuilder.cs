@@ -96,7 +96,7 @@ public static class AnimationBuilder
         }
     }
 
-    public static async IAsyncEnumerable<BoneSpriteWithName> BuildAnim(ILoader loader, IGfxType gfx, string animName, long frame, Transform2D transform, AnimationBuilderOptions options = AnimationBuilderOptions.None)
+    public static async IAsyncEnumerable<BoneSprite> BuildAnim(ILoader loader, IGfxType gfx, string animName, long frame, Transform2D transform, AnimationBuilderOptions options = AnimationBuilderOptions.None)
     {
         Transform2D scaleTransform = Transform2D.CreateScale(gfx.AnimScale, gfx.AnimScale);
         Transform2D realTransform = transform * scaleTransform;
@@ -137,34 +137,46 @@ public static class AnimationBuilder
                 IAnmBone bone = instance.Bone;
                 Transform2D boneTransform = new(bone.ScaleX, bone.RotateSkew1, bone.RotateSkew0, bone.ScaleY, bone.X, bone.Y);
 
-                BoneSpriteWithName boneSprite = new()
+                if (instance is SwfBoneInstance swfInstance)
                 {
-                    SwfFilePath = instance.FilePath,
-                    SpriteName = instance.SpriteName,
-                    Frame = bone.Frame - 1,
-                    AnimScale = animScale,
-                    Transform = realTransform * boneTransform * bigHeadTransform,
-                    Tint = gfx.Tint,
-                    Opacity = bone.Opacity,
-                };
-
-                await BuildColorMap(loader, boneSprite, instance, gfx.ColorSwaps);
-
-                yield return boneSprite;
+                    SwfBoneSpriteWithName boneSprite = new()
+                    {
+                        SwfFilePath = swfInstance.SwfFilePath,
+                        SpriteName = swfInstance.SpriteName,
+                        Frame = bone.Frame - 1,
+                        AnimScale = animScale,
+                        Transform = realTransform * boneTransform * bigHeadTransform,
+                        Tint = gfx.Tint,
+                        Opacity = bone.Opacity,
+                    };
+                    await BuildColorMap(loader, boneSprite, swfInstance, gfx.ColorSwaps);
+                    yield return boneSprite;
+                }
+                else if (instance is BitmapBoneInstance bitmapInstance)
+                {
+                    BitmapBoneSprite boneSprite = new()
+                    {
+                        SpriteData = bitmapInstance.SpriteData,
+                        Transform = realTransform * boneTransform * bigHeadTransform,
+                        Tint = gfx.Tint,
+                        Opacity = bone.Opacity,
+                    };
+                    yield return boneSprite;
+                }
             }
         }
         // swf animation
         else
         {
-            BoneInstance fakeInstance = new()
+            SwfBoneInstance fakeInstance = new()
             {
-                FilePath = gfx.AnimFile,
+                SwfFilePath = gfx.AnimFile,
                 OgBoneName = gfx.AnimClass,
                 SpriteName = gfx.AnimClass,
                 Bone = null!,
                 Visible = true,
             };
-            BoneSpriteWithName boneSprite = new()
+            SwfBoneSpriteWithName boneSprite = new()
             {
                 SwfFilePath = gfx.AnimFile,
                 SpriteName = gfx.AnimClass,
@@ -248,9 +260,12 @@ public static class AnimationBuilder
                 handBoneName = "";
             }
 
-            ICustomArt? customArt = await FindCustomArt(loader, boneName, finalBoneName, gfx.CustomArts, isHand ? right : mirrored);
+            List<ICustomArt> customArts = [.. gfx.CustomArts];
+            ISpriteData? spriteData = await FindSpriteData(loader, boneName, customArts);
+            ICustomArt? customArt = spriteData is not null
+                ? null
+                : await FindCustomArt(loader, boneName, finalBoneName, customArts, isHand ? right : mirrored);
 
-            string customArtSuffix = customArt is not null ? $"_{customArt.Name}" : "";
             bool visible = boneType switch
             {
                 null => true,
@@ -268,32 +283,59 @@ public static class AnimationBuilder
                 }
             };
 
-            string trueSpriteName = finalBoneName + customArtSuffix;
-            string trueFilePath = customArt?.FileName ?? gfx.AnimFile;
-
-            string? boneSource = await loader.GetBoneFilePath(trueSpriteName);
-            if (boneSource is not null)
-                trueFilePath = boneSource;
-
-            if (!loader.SwfExists(trueFilePath))
-                continue;
-
-            yield return new()
+            if (spriteData is not null)
             {
-                FilePath = trueFilePath,
-                SpriteName = trueSpriteName,
-                OgBoneName = boneName,
-                Bone = bone,
-                Visible = visible,
-            };
+                yield return new BitmapBoneInstance()
+                {
+                    SpriteData = spriteData,
+                    OgBoneName = boneName,
+                    Bone = bone,
+                    Visible = visible,
+                };
+            }
+            else
+            {
+                string customArtSuffix = customArt is not null ? $"_{customArt.Name}" : "";
+                string trueSpriteName = finalBoneName + customArtSuffix;
+                string trueFilePath = customArt?.FileName ?? gfx.AnimFile;
+
+                string? boneSource = await loader.GetBoneFilePath(trueSpriteName);
+                if (boneSource is not null)
+                    trueFilePath = boneSource;
+
+                if (!loader.SwfExists(trueFilePath))
+                    continue;
+
+                yield return new SwfBoneInstance()
+                {
+                    SwfFilePath = trueFilePath,
+                    SpriteName = trueSpriteName,
+                    OgBoneName = boneName,
+                    Bone = bone,
+                    Visible = visible,
+                };
+            }
         }
     }
 
-    private static async ValueTask<ICustomArt?> FindCustomArt(ILoader loader, string ogBoneName, string boneName, IEnumerable<ICustomArt> customArts, bool right)
+    private static async ValueTask<ISpriteData?> FindSpriteData(ILoader loader, string boneName, List<ICustomArt> customArts)
+    {
+        for (int i = customArts.Count - 1; i >= 0; --i)
+        {
+            ICustomArt ca = customArts[i];
+            ISpriteData? spriteData = await loader.GetSpriteData(boneName, ca.Name);
+            if (spriteData is not null) return spriteData;
+        }
+
+        return await loader.GetSpriteData(boneName, "");
+    }
+
+    private static async ValueTask<ICustomArt?> FindCustomArt(ILoader loader, string ogBoneName, string boneName, List<ICustomArt> customArts, bool right)
     {
         ArtTypeEnum artType = BoneDatabase.ArtTypeDict.GetValueOrDefault(ogBoneName, ArtTypeEnum.None);
-        foreach (ICustomArt ca in customArts.Reverse())
+        for (int i = customArts.Count - 1; i >= 0; --i)
         {
+            ICustomArt ca = customArts[i];
             bool rightMatches = !ca.Right || right;
             bool artTypeMatches = artType == ArtTypeEnum.None || ca.Type == ArtTypeEnum.None || ca.Type == artType;
             if (rightMatches && artTypeMatches)
@@ -456,7 +498,7 @@ public static class AnimationBuilder
         }
     }
 
-    private static async ValueTask BuildColorMap(ILoader loader, BoneSpriteWithName sprite, BoneInstance instance, IEnumerable<IColorSwap> colorSwaps)
+    private static async ValueTask BuildColorMap(ILoader loader, SwfBoneSpriteWithName sprite, SwfBoneInstance instance, IEnumerable<IColorSwap> colorSwaps)
     {
         // the .a checks only tell us if we CAN swap. they do no filtering.
 
@@ -515,7 +557,7 @@ public static class AnimationBuilder
 
     private static async IAsyncEnumerable<(T, T?)> Pairs<T>(this IAsyncEnumerable<T> enumerable)
     {
-        IAsyncEnumerator<T> enumerator = enumerable.GetAsyncEnumerator();
+        await using IAsyncEnumerator<T> enumerator = enumerable.GetAsyncEnumerator();
         if (!await enumerator.MoveNextAsync())
             yield break;
         T prev = enumerator.Current;

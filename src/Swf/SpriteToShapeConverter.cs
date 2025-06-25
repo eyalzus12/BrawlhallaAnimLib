@@ -12,13 +12,13 @@ namespace BrawlhallaAnimLib.Swf;
 
 public static class SpriteToShapeConverter
 {
-    public static async ValueTask<BoneShape[]> ConvertToShapes(ILoader loader, BoneSprite boneSprite)
+    public static async ValueTask<BoneShape[]> ConvertToShapes(ILoader loader, SwfBoneSprite boneSprite)
     {
         string swfPath = boneSprite.SwfFilePath;
 
         ushort spriteId;
         string spriteName;
-        if (boneSprite is BoneSpriteWithName boneSpriteWithName)
+        if (boneSprite is SwfBoneSpriteWithName boneSpriteWithName)
         {
             spriteName = boneSpriteWithName.SpriteName;
 
@@ -31,7 +31,7 @@ public static class SpriteToShapeConverter
 
             spriteId = temp.Value;
         }
-        else if (boneSprite is BoneSpriteWithId boneSpriteWithId)
+        else if (boneSprite is SwfBoneSpriteWithId boneSpriteWithId)
         {
             spriteId = boneSpriteWithId.SpriteId;
             spriteName = boneSpriteWithId.SpriteId.ToString();
@@ -84,7 +84,7 @@ public static class SpriteToShapeConverter
                 else if (layerTag is DefineSpriteTag childSpriteTag)
                 {
                     ushort childSpriteId = childSpriteTag.SpriteID;
-                    BoneSpriteWithId childSprite = new()
+                    SwfBoneSpriteWithId childSprite = new()
                     {
                         SwfFilePath = swfPath,
                         SpriteId = childSpriteId,
