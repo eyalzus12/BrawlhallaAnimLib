@@ -4,7 +4,7 @@ using System.Linq;
 using BrawlhallaAnimLib.Bones;
 using BrawlhallaAnimLib.Gfx;
 
-namespace BrawlhallaAnimLib.Reading.CostumeTypes;
+namespace BrawlhallaAnimLib.Reading;
 
 public sealed class CostumeTypesGfx
 {

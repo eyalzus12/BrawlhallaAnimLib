@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using BrawlhallaAnimLib.Bones;
 using BrawlhallaAnimLib.Gfx;
-using BrawlhallaAnimLib.Reading.CostumeTypes;
 
-namespace BrawlhallaAnimLib.Reading.WeaponSkinTypes;
+namespace BrawlhallaAnimLib.Reading;
 
 public sealed class WeaponSkinTypesGfx
 {

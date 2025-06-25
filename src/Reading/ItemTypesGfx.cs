@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using BrawlhallaAnimLib.Gfx;
 
-namespace BrawlhallaAnimLib.Reading.ItemTypes;
+namespace BrawlhallaAnimLib.Reading;
 
 public sealed class ItemTypesGfx
 {
