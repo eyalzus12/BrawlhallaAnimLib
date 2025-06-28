@@ -18,6 +18,16 @@ public enum AnimationBuilderOptions
     BigHeadMode = 1 << 1,
 }
 
+public readonly struct AnimationData
+{
+    public required long FrameCount { get; init; }
+    public required uint LoopStart { get; init; }
+    public required uint RecoveryStart { get; init; }
+    public required uint FreeStart { get; init; }
+    public required uint PreviewFrame { get; init; }
+    public required uint BaseStart { get; init; }
+}
+
 public static class AnimationBuilder
 {
     private static readonly string[] AnimClassPrefixes = ["a_Animation_EB_", "a__LootBox", "a__PodiumRig"];
@@ -72,8 +82,7 @@ public static class AnimationBuilder
         "a_Helmet",
     ];
 
-    // null if not loaded yet
-    public static async ValueTask<long> GetAnimFrameCount(ILoader loader, string animFile, string animClass, string animName)
+    public static async ValueTask<AnimationData> GetAnimData(ILoader loader, string animFile, string animClass, string animName)
     {
         if (IsAnmAnimation(animFile, animClass))
         {
@@ -82,7 +91,15 @@ public static class AnimationBuilder
             if (!anmClass.TryGetAnimation(animName, out IAnmAnimation? animation))
                 throw new ArgumentException($"No animation {animName} in anim class {animClass}");
 
-            return animation.Frames.Length;
+            return new()
+            {
+                FrameCount = animation.Frames.Length,
+                LoopStart = animation.LoopStart,
+                RecoveryStart = animation.RecoveryStart,
+                FreeStart = animation.FreeStart,
+                PreviewFrame = animation.PreviewFrame,
+                BaseStart = animation.BaseStart,
+            };
         }
         else
         {
@@ -92,7 +109,15 @@ public static class AnimationBuilder
             if (tag is not DefineSpriteTag sprite)
                 throw new ArgumentException($"Tag id {spriteId} does not point to a sprite in {animFile}");
 
-            return sprite.FramesCount;
+            return new()
+            {
+                FrameCount = sprite.FramesCount,
+                LoopStart = 0,
+                RecoveryStart = sprite.FramesCount,
+                BaseStart = 0,
+                FreeStart = sprite.FramesCount,
+                PreviewFrame = 0,
+            };
         }
     }
 
