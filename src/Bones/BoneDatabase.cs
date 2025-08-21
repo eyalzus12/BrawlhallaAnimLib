@@ -663,6 +663,16 @@ internal static class BoneDatabase
         Register1("a_DomoJrCompanionShinBack1", 6);
         Register1("a_DomoJrCompanionShinFront1", 6);
         Register1("a_DomoJrCompanionWing1", 6);
+        Register1("MurphyCompanionArm", 6);
+        Register1("MurphyCompanionBody", 6);
+        Register1("MurphyCompanionEyesClosed", 6);
+        Register1("MurphyCompanionHead", 6);
+        Register1("MurphyCompanionHeadDown", 6);
+        Register1("MurphyCompanionHeadUp", 6);
+        Register1("MurphyCompanionLeg", 6);
+        Register1("MurphyCompanionManual", 6);
+        Register1("MurphyCompanionShock", 6);
+        Register1("MurphyCompanionWings", 6);
         Register1("a_CapeIdle00", 2);
         Register1("a_CapeIdle01", 2);
         Register1("a_CapeIdle02", 2);
