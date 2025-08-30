@@ -5,7 +5,7 @@ using BrawlhallaAnimLib.Gfx;
 
 namespace BrawlhallaAnimLib.Reading;
 
-public sealed class EndOfMatchVoicelineTypesGfx
+public sealed class EndMatchVoicelineTypesGfx
 {
     // why did they hardcode this
     private readonly Dictionary<string, string> CategoryAnimRigs = new()
@@ -22,7 +22,7 @@ public sealed class EndOfMatchVoicelineTypesGfx
     internal string Category { get; }
     internal string? AnimCustomArt { get; }
 
-    public EndOfMatchVoicelineTypesGfx(XElement element)
+    public EndMatchVoicelineTypesGfx(XElement element)
     {
         foreach (XElement child in element.Elements())
         {
