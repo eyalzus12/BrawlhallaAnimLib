@@ -126,6 +126,7 @@ public static class AnimationBuilder
         Transform2D scaleTransform = Transform2D.CreateScale(gfx.AnimScale, gfx.AnimScale);
         Transform2D realTransform = transform * scaleTransform;
 
+
         // anm animation
         if (IsAnmAnimation(gfx.AnimFile, gfx.AnimClass))
         {
@@ -141,7 +142,8 @@ public static class AnimationBuilder
 
             bool isTooltip = options.HasFlag(AnimationBuilderOptions.WeaponTooltip);
             IAsyncEnumerable<BoneInstance> bones = GetBoneInstances(loader, anmFrame.Bones, gfx);
-            bones = SetAsymBonesVisibility(bones, gfx, realTransform.ScaleX * realTransform.ScaleY < 0, isTooltip);
+            IBoneDatabase boneDatabase = await loader.GetBoneDatabase();
+            bones = SetAsymBonesVisibility(boneDatabase, bones, gfx, realTransform.ScaleX * realTransform.ScaleY < 0, isTooltip);
 
             bool bigHeadMode = options.HasFlag(AnimationBuilderOptions.BigHeadMode);
 
@@ -231,6 +233,8 @@ public static class AnimationBuilder
     // cannot be Task.WhenAll'ed because of otherHand and handBoneName
     private static async IAsyncEnumerable<BoneInstance> GetBoneInstances(ILoader loader, IEnumerable<IAnmBone> bones, IGfxType gfx)
     {
+        IBoneDatabase boneDatabase = await loader.GetBoneDatabase();
+
         bool otherHand = false;
         string handBoneName = "";
         foreach (IAnmBone bone in bones)
@@ -238,8 +242,8 @@ public static class AnimationBuilder
             string boneName = await loader.GetBoneName(bone.Id) ?? throw new ArgumentException($"Could not find bone name for id {bone.Id}");
 
             BoneType? boneType;
-            if (BoneDatabase.BoneTypeDict.TryGetValue(boneName, out BoneType boneType_))
-                boneType = boneType_;
+            if (boneDatabase.TryGetBoneType(boneName, out BoneTypeEnum type, out bool dir))
+                boneType = new(type, dir);
             else
                 boneType = null;
 
@@ -264,8 +268,7 @@ public static class AnimationBuilder
             {
                 finalBoneName = overridenBoneName;
             }
-            else if ((boneType is null || !gfx.HasAsymmetrySwapFlag(boneType.Value.Type)) &&
-                BoneDatabase.AsymSwapDict.TryGetValue(boneName, out string? otherBoneName))
+            else if ((boneType is null || !gfx.HasAsymmetrySwapFlag(boneType.Value.Type)) && boneDatabase.TryGetAsymSwap(boneName, out string? otherBoneName))
             {
                 finalBoneName = otherBoneName;
             }
@@ -294,16 +297,16 @@ public static class AnimationBuilder
             bool visible = boneType switch
             {
                 null => true,
-                _ => boneType.Value.Type switch
+                BoneType boneInfo => boneInfo.Type switch
                 {
                     BoneTypeEnum.HAND when isOtherHand => false,
-                    BoneTypeEnum.FOREARM when BoneDatabase.ForearmVariantDict.ContainsValue(finalBoneName) => false,
+                    BoneTypeEnum.FOREARM when boneDatabase.IsVariantFor(finalBoneName, boneInfo.Type) => false,
                     BoneTypeEnum.SHOULDER when finalBoneName == "a_Shoulder1R" || finalBoneName == "a_Shoulder1RightR" => false,
                     BoneTypeEnum.LEG when finalBoneName == "a_Leg1R" || finalBoneName == "a_Leg1RightR" => false,
-                    BoneTypeEnum.SHIN when BoneDatabase.ShinVariantDict.ContainsValue(finalBoneName) => false,
+                    BoneTypeEnum.SHIN when boneDatabase.IsVariantFor(finalBoneName, boneInfo.Type) => false,
                     BoneTypeEnum._TORSO when finalBoneName == "a_Torso1R" || finalBoneName == "a_BotTorsoR" => false,
                     BoneTypeEnum.GAUNTLETFOREARM when finalBoneName == "a_WeaponFistsForearmR" || finalBoneName == "a_WeaponFistsForearmRightR" => false,
-                    BoneTypeEnum.KATAR when BoneDatabase.KatarVariantDict.ContainsValue(finalBoneName) => false,
+                    BoneTypeEnum.KATAR when boneDatabase.IsVariantFor(finalBoneName, boneInfo.Type) => false,
                     _ => true,
                 }
             };
@@ -357,7 +360,11 @@ public static class AnimationBuilder
 
     private static async ValueTask<ICustomArt?> FindCustomArt(ILoader loader, string ogBoneName, string boneName, List<ICustomArt> customArts, bool right)
     {
-        ArtTypeEnum artType = BoneDatabase.ArtTypeDict.GetValueOrDefault(ogBoneName, ArtTypeEnum.None);
+        IBoneDatabase boneDatabase = await loader.GetBoneDatabase();
+        ArtTypeEnum artType = ArtTypeEnum.None;
+        if (boneDatabase.TryGetArtType(ogBoneName, out ArtTypeEnum artType_))
+            artType = artType_;
+
         for (int i = customArts.Count - 1; i >= 0; --i)
         {
             ICustomArt ca = customArts[i];
@@ -383,7 +390,7 @@ public static class AnimationBuilder
     }
 
     // cannot be Task.WhenAll'ed because we have to read and manipulate following bones
-    private static async IAsyncEnumerable<BoneInstance> SetAsymBonesVisibility(IAsyncEnumerable<BoneInstance> bones, IGfxType gfx, bool spriteMirrored, bool isTooltip = false)
+    private static async IAsyncEnumerable<BoneInstance> SetAsymBonesVisibility(IBoneDatabase boneDatabase, IAsyncEnumerable<BoneInstance> bones, IGfxType gfx, bool spriteMirrored, bool isTooltip = false)
     {
         bool useRightTorso = gfx.UseRightTorso;
         bool useTrueLeftRightTorso = gfx.UseTrueLeftRightTorso;
@@ -408,14 +415,14 @@ public static class AnimationBuilder
         {
             bool mirrored = false;
             bool hand = false;
-            if (BoneDatabase.BoneTypeDict.TryGetValue(instance.OgBoneName, out BoneType boneType))
+            if (boneDatabase.TryGetBoneType(instance.OgBoneName, out BoneTypeEnum boneType, out bool boneDir))
             {
-                if (MirroredBoneTypes.Contains(boneType.Type))
+                if (MirroredBoneTypes.Contains(boneType))
                 {
                     float det = instance.Bone.ScaleX * instance.Bone.ScaleY - instance.Bone.RotateSkew0 * instance.Bone.RotateSkew1;
-                    mirrored = (det < 0) != boneType.Dir;
+                    mirrored = (det < 0) != boneDir;
                 }
-                hand = boneType.Type == BoneTypeEnum.HAND;
+                hand = boneType == BoneTypeEnum.HAND;
             }
 
             void doVisibilitySwap()
@@ -467,12 +474,12 @@ public static class AnimationBuilder
                 doVisibilitySwap();
                 useRightGauntletRight = false;
             }
-            else if (rightKatarUses > 0 && BoneDatabase.KatarVariantDict.ContainsKey(instance.OgBoneName))
+            else if (rightKatarUses > 0 && boneDatabase.HasVariantFor(instance.OgBoneName, BoneTypeEnum.KATAR))
             {
                 doVisibilitySwap();
                 rightKatarUses--;
             }
-            else if (rightForearmUses > 0 && BoneDatabase.ForearmVariantDict.ContainsKey(instance.OgBoneName))
+            else if (rightForearmUses > 0 && boneDatabase.HasVariantFor(instance.OgBoneName, BoneTypeEnum.FOREARM))
             {
                 doVisibilitySwap();
                 rightForearmUses--;
@@ -502,7 +509,7 @@ public static class AnimationBuilder
                 doVisibilitySwap();
                 useRightLeg1Right = false;
             }
-            else if (rightShinUses > 0 && BoneDatabase.ShinVariantDict.ContainsKey(instance.OgBoneName))
+            else if (rightShinUses > 0 && boneDatabase.HasVariantFor(instance.OgBoneName, BoneTypeEnum.SHIN))
             {
                 doVisibilitySwap();
                 rightShinUses--;
@@ -525,9 +532,11 @@ public static class AnimationBuilder
 
     private static async ValueTask BuildColorMap(ILoader loader, SwfBoneSpriteWithName sprite, SwfBoneInstance instance, IEnumerable<IColorSwap> colorSwaps)
     {
-        // the .a checks only tell us if we CAN swap. they do no filtering.
+        IBoneDatabase boneDatabase = await loader.GetBoneDatabase();
 
-        ArtTypeEnum artType = BoneDatabase.ArtTypeDict.GetValueOrDefault(instance.OgBoneName, ArtTypeEnum.None);
+        ArtTypeEnum artType = ArtTypeEnum.None;
+        if (boneDatabase.TryGetArtType(instance.OgBoneName, out ArtTypeEnum artType_))
+            artType = artType_;
 
         HashSet<uint>? aSet = null;
         bool canColorSwap = false;

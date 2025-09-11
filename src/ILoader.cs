@@ -19,7 +19,8 @@ public interface ILoader
     // anm
     ValueTask<IAnmClass?> GetAnmClass(string classIdentifier);
 
-    // bone types
+    // bone data
     ValueTask<string?> GetBoneName(short boneId);
     ValueTask<string?> GetBoneFilePath(string boneName);
+    ValueTask<IBoneDatabase> GetBoneDatabase();
 }
