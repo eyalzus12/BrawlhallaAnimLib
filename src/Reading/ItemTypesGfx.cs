@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using BrawlhallaAnimLib.Gfx;
 
 namespace BrawlhallaAnimLib.Reading;
@@ -13,8 +14,16 @@ public sealed class ItemTypesGfx
     internal string? WorldGfxSingleOverride { get; }
 
     public bool HasHeldCustomArt => HeldCustomArt is not null;
+
     public bool HasEquipGfx => EquipGfxType is not null;
+    public bool HasEquipCustomArt => EquipGfxType is not null && EquipGfxType.CustomArtsInternal.Count > 0;
+    public string? EquipAnimFile => EquipGfxType?.AnimFile;
+    public string? EquipAnimClass => EquipGfxType?.AnimClass;
+
     public bool HasWorldGfx => WorldGfxType is not null;
+    public bool HasWorldCustomArt => WorldGfxType is not null && WorldGfxType.CustomArtsInternal.Count > 0;
+    public string? WorldAnimFile => WorldGfxType?.AnimFile;
+    public string? WorldAnimClass => WorldGfxType?.AnimClass;
 
     public ItemTypesGfx(ICsvRow row)
     {
@@ -122,6 +131,7 @@ public sealed class ItemTypesGfx
         return gfxResult;
     }
 
+    [return: NotNullIfNotNull(nameof(gfxType))]
     public IGfxType? ToEquipGfx(IGfxType? gfxType = null)
     {
         if (gfxType is null) return EquipGfxType;
