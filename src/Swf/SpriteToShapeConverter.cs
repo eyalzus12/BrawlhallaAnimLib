@@ -98,11 +98,13 @@ public static class SpriteToShapeConverter
                     };
                     return await ConvertToShapes(loader, childSprite);
                 }
-                else if (layerTag is DefineTextBaseTag text)
+                else if (layerTag is DefineTextBaseTag or DefineEditTextTag)
                 {
+                    /*
+                    We don't handle text because all DefineText in the game are empty strings.
+                    They are used for master chief cannon sigs for some reason.
+                    */
                     return [];
-                    // we don't handle text because all DefineText in the game are empty strings
-                    // they are used for master chief cannon sigs for some reason
                 }
                 else
                 {
