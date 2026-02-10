@@ -7,5 +7,6 @@ public interface IAnmAnimation
     uint FreeStart { get; }
     uint PreviewFrame { get; }
     uint BaseStart { get; }
+    uint[] RunEndFrames { get; }
     IAnmFrame[] Frames { get; }
 }
