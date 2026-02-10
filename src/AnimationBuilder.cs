@@ -26,6 +26,7 @@ public readonly struct AnimationData
     public required uint FreeStart { get; init; }
     public required uint PreviewFrame { get; init; }
     public required uint BaseStart { get; init; }
+    public required uint[] RunEndFrames { get; init; }
 }
 
 public static class AnimationBuilder
@@ -99,6 +100,7 @@ public static class AnimationBuilder
                 FreeStart = animation.FreeStart,
                 PreviewFrame = animation.PreviewFrame,
                 BaseStart = animation.BaseStart,
+                RunEndFrames = animation.RunEndFrames,
             };
         }
         else
@@ -117,6 +119,7 @@ public static class AnimationBuilder
                 BaseStart = 0,
                 FreeStart = sprite.FramesCount,
                 PreviewFrame = 0,
+                RunEndFrames = [],
             };
         }
     }
