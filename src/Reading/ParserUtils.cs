@@ -8,18 +8,18 @@ public static class ParserUtils
 {
     public static uint ParseHexString(string str)
     {
-        if (!str.StartsWith("0x") && !str.StartsWith("0X")) return 0;
+        if (!str.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) return 0;
         if (!uint.TryParse(str.AsSpan()[2..], NumberStyles.HexNumber, null, out uint result)) return 0;
 
         return result;
     }
 
-    internal static InternalCustomArtImpl ParseCustomArt(string value, bool grabType, ArtTypeEnum defaultType)
+    internal static InternalCustomArtImpl ParseCustomArt(string value, bool checkTypeOverride, ArtTypeEnum defaultType)
     {
         bool right = false;
         ArtTypeEnum type = defaultType;
 
-        if (grabType)
+        if (checkTypeOverride)
         {
             string[] parts1 = value.Split(':', 2);
             if (parts1.Length > 1)

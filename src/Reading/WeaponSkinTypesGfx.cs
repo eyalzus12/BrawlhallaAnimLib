@@ -16,7 +16,7 @@ public sealed class WeaponSkinTypesGfx
         (ColorSchemeSwapEnum.SpecialVL, ColorSchemeSwapEnum.SpecialLt),
     ];
 
-    private static readonly (ColorSchemeSwapEnum swapType, uint source, uint fallbackTarget)[] KatarsLightsaberSwapTypes = [
+    private static readonly (ColorSchemeSwapEnum swapType, uint source, uint fallbackTarget)[] KatarsHandSwapTypes = [
         (ColorSchemeSwapEnum.HandsLt, 0x54ABEB, 0),
         (ColorSchemeSwapEnum.HandsSkinLt, 0x54ABEB, 0xFFCC99),
         (ColorSchemeSwapEnum.HandsDk, 0xBFFFFC, 0),
@@ -31,6 +31,9 @@ public sealed class WeaponSkinTypesGfx
     internal bool UseRightKatar { get; } = false;
     internal bool HideRightPistol2D { get; } = false;
     internal List<InternalCustomArtImpl> BaseCustomArts { get; } = [];
+    // Dhalsim thing (override the custom arts for a specific skin)
+    internal string[] CostumeOverrides { get; } = [];
+    internal List<InternalCustomArtImpl> OverrideCustomArts { get; } = [];
 
     internal bool HasPickupCustomArt { get; } = false;
     internal Dictionary<ColorSchemeSwapEnum, uint> SwapDefines { get; } = [];
@@ -86,8 +89,11 @@ public sealed class WeaponSkinTypesGfx
                     defaultType = ArtTypeEnum.Pickup;
                     HasPickupCustomArt = true;
                 }
-                // the game also checks for Costume, but sets to ArtTypeEnum.Weapon instead of ArtTypeEnum.Costume
-                // is that a bug?
+                else if (key.Contains("Costume"))
+                {
+                    // this is the logic in the game
+                    defaultType = ArtTypeEnum.Weapon;
+                }
 
                 BaseCustomArts.Add(ParserUtils.ParseCustomArt(value, true, defaultType));
             }
@@ -145,10 +151,16 @@ public sealed class WeaponSkinTypesGfx
                     }
                 }
             }
+            else if (key == "CostumeOverrides")
+            {
+                CostumeOverrides = value.Split(',');
+            }
+            else if (key == "OverrideCustomArt")
+            {
+                OverrideCustomArts.Add(ParserUtils.ParseCustomArt(value, true, ArtTypeEnum.Weapon));
+            }
             /*
             There are also these properties:
-            CostumeOverrides - used by dhalsim
-            OverrideCustomArt - used by dhalsim
             AttackGfxOverrideSource - used by lightsabers
             AttackGfxOverride.* - used by lightsabers
             */
@@ -167,7 +179,9 @@ public sealed class WeaponSkinTypesGfx
             HideRightPistol2D = HideRightPistol2D,
         };
         gfxResult.AsymmetrySwapFlags |= AsymmetrySwapFlags;
-        gfxResult.CustomArtsInternal.AddRange(BaseCustomArts);
+
+        bool useCustomArtsOverride = costumeType is not null && CostumeOverrides.Contains(costumeType.CostumeName);
+        gfxResult.CustomArtsInternal.AddRange(useCustomArtsOverride ? OverrideCustomArts : BaseCustomArts);
 
         ColorSchemeSwapEnum[] swapTypesList = Enum.GetValues<ColorSchemeSwapEnum>();
         if (colorScheme is not null)
@@ -262,7 +276,7 @@ public sealed class WeaponSkinTypesGfx
                 return costumeType.SwapDefines.GetValueOrDefault(swapType, 0u);
             }
 
-            foreach ((ColorSchemeSwapEnum swapType, uint source, uint fallbackTarget) in KatarsLightsaberSwapTypes)
+            foreach ((ColorSchemeSwapEnum swapType, uint source, uint fallbackTarget) in KatarsHandSwapTypes)
             {
                 uint target = 0;
                 // indirect

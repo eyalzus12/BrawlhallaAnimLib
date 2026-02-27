@@ -6,7 +6,8 @@ namespace BrawlhallaAnimLib.Reading;
 
 public sealed class SeasonBorderTypesGfx
 {
-    internal string AnimRig { get; }
+    public string AnimFile => "Animation_LoadingFrames.swf";
+    public string AnimRig { get; }
     internal string? AnimCustomArt { get; }
 
     public SeasonBorderTypesGfx(XElement element)
@@ -33,7 +34,7 @@ public sealed class SeasonBorderTypesGfx
     {
         InternalGfxImpl gfxResult = new()
         {
-            AnimFile = "Animation_LoadingFrames.swf",
+            AnimFile = AnimFile,
             AnimClass = AnimRig,
         };
 

@@ -11,8 +11,8 @@ public sealed class CompanionTypesGfx
 {
     internal Dictionary<ColorSchemeSwapEnum, uint> SwapDefines { get; } = [];
 
-    internal string AnimClass { get; }
-    internal string AnimFile { get; }
+    public string AnimFile { get; }
+    public string AnimClass { get; }
     internal uint AsymmetrySwapFlags { get; } = 0;
     internal List<InternalCustomArtImpl> CustomArts { get; } = [];
 

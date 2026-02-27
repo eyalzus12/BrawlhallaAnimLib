@@ -6,7 +6,8 @@ namespace BrawlhallaAnimLib.Reading;
 
 public sealed class PlayerThemeTypesGfx
 {
-    internal string AnimRig { get; }
+    public string AnimFile => "Animation_PlayerThemes.swf";
+    public string AnimRig { get; }
     internal string? AnimCustomArt { get; }
 
     public PlayerThemeTypesGfx(XElement element)
@@ -33,7 +34,7 @@ public sealed class PlayerThemeTypesGfx
     {
         InternalGfxImpl gfxResult = new()
         {
-            AnimFile = "Animation_PlayerThemes.swf",
+            AnimFile = AnimFile,
             AnimClass = AnimRig,
         };
 

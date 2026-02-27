@@ -87,8 +87,8 @@ public static class AnimationBuilder
     {
         if (IsAnmAnimation(animFile, animClass))
         {
+            // TODO: if not found, fallback to swf?
             IAnmClass? anmClass = await loader.GetAnmClass($"{animFile}/{animClass}") ?? throw new ArgumentException($"Could not find anim class {animClass} in {animFile}. Make sure you loaded it.");
-
             if (!anmClass.TryGetAnimation(animName, out IAnmAnimation? animation))
                 throw new ArgumentException($"No animation {animName} in anim class {animClass}");
 
@@ -222,7 +222,7 @@ public static class AnimationBuilder
         }
     }
 
-    private static readonly HashSet<BoneTypeEnum> MirroredBoneTypes = [
+    private static readonly HashSet<BoneTypeEnum> BoneTypesWithAsymmetry = [
         BoneTypeEnum.HAND,
         BoneTypeEnum._TORSO,
         BoneTypeEnum.GAUNTLETHAND,
@@ -257,7 +257,7 @@ public static class AnimationBuilder
             }
             else
             {
-                if (MirroredBoneTypes.Contains(boneType.Value.Type))
+                if (BoneTypesWithAsymmetry.Contains(boneType.Value.Type))
                 {
                     double det = bone.ScaleX * bone.ScaleY - bone.RotateSkew0 * bone.RotateSkew1;
                     mirrored = (det < 0) != boneType.Value.Dir;
@@ -420,7 +420,7 @@ public static class AnimationBuilder
             bool hand = false;
             if (boneDatabase.TryGetBoneType(instance.OgBoneName, out BoneTypeEnum boneType, out bool boneDir))
             {
-                if (MirroredBoneTypes.Contains(boneType))
+                if (BoneTypesWithAsymmetry.Contains(boneType))
                 {
                     float det = instance.Bone.ScaleX * instance.Bone.ScaleY - instance.Bone.RotateSkew0 * instance.Bone.RotateSkew1;
                     mirrored = (det < 0) != boneDir;

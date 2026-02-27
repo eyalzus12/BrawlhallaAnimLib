@@ -4,13 +4,13 @@ using BrawlhallaAnimLib.Gfx;
 
 namespace BrawlhallaAnimLib.Reading;
 
-public sealed class ClientThemeTypesGfx
+public sealed class SplashArtTypesGfx
 {
-    public string AnimFile => "Animation_ClientThemeLogos.swf";
+    public string AnimFile => "Animation_SplashArt.swf";
     public string AnimRig { get; }
     internal string? AnimCustomArt { get; }
 
-    public ClientThemeTypesGfx(XElement element)
+    public SplashArtTypesGfx(XElement element)
     {
         foreach (XElement child in element.Elements())
         {
@@ -42,7 +42,7 @@ public sealed class ClientThemeTypesGfx
         {
             gfxResult.CustomArtsInternal.Add(new InternalCustomArtImpl()
             {
-                FileName = "Gfx_ClientThemeLogos.swf",
+                FileName = "Gfx_SplashArt.swf",
                 Name = AnimCustomArt,
             });
         }

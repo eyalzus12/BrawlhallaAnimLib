@@ -13,8 +13,8 @@ public enum PodiumTeamEnum
 
 public sealed class PodiumTypesGfx
 {
-    internal string AnimFile { get; }
-    internal string AnimRig { get; }
+    public string AnimFile { get; }
+    public string AnimRig { get; }
     internal string? AnimCustomArt { get; }
     internal string CustomArtTeamRed { get; }
     internal string CustomArtTeamBlue { get; }

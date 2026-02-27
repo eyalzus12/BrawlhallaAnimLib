@@ -19,6 +19,8 @@ public sealed class EndMatchVoicelineTypesGfx
         ["FalseStart"] = "a__ScreenFanFareC",
     };
 
+    public string AnimFile => "Animation_GameUI.swf";
+    public string AnimRig => CategoryAnimRigs[Category];
     internal string Category { get; }
     internal string? AnimCustomArt { get; }
 
@@ -47,7 +49,7 @@ public sealed class EndMatchVoicelineTypesGfx
         InternalGfxImpl gfxResult = new()
         {
             AnimFile = "Animation_GameUI.swf",
-            AnimClass = CategoryAnimRigs[Category],
+            AnimClass = AnimRig,
         };
 
         if (AnimCustomArt is not null)

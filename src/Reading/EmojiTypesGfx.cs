@@ -6,7 +6,8 @@ namespace BrawlhallaAnimLib.Reading;
 
 public sealed class EmojiTypesGfx
 {
-    internal string AnimRig { get; }
+    public string AnimFile => "Animation_Emojis.swf";
+    public string AnimRig { get; }
     internal string? AnimCustomArt { get; }
     internal string? SourceFile { get; }
 
@@ -39,7 +40,7 @@ public sealed class EmojiTypesGfx
     {
         InternalGfxImpl gfxResult = new()
         {
-            AnimFile = "Animation_Emojis.swf",
+            AnimFile = AnimFile,
             AnimClass = AnimRig,
         };
 
